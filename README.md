@@ -9,5 +9,10 @@ project whistlebot is an experiment to explore a possible reporting system/web i
 whistlebot will be planned to anticipate the worst, but assume the best -- that means that while there will (hopefully) be safeguards from using whistlebot's data with malicious intent, at this point in time, project whistlebot cannot be held responsible for misuse of its critical features in moderating servers.
 
 ## can i contribute to whistlebot?
-__AS OF JAN 21, 2021 --__ whistlebot is currently a capstone project for the classroom portion of cohort 14 of [ada developers academy](https://adadevelopersacademy.org/). starting around march, i will be open to reviewing pull requests and suggested modifications for the bot, but cannot guarantee the speediest response by then! thank you for understanding! 
+__AS OF JAN 21, 2021 --__ whistlebot is currently a capstone project for the classroom portion of cohort 14 of [ada developers academy](https://adadevelopersacademy.org/). starting around march, i will be open to reviewing pull requests and suggested modifications for the bot, but cannot guarantee the speediest response until possibly summer 2021! thank you for understanding! 
+
+## where can i check whistlebot's progress/intended features?
+you can view the trello board **[HERE](https://trello.com/b/pRWqDbYP/project-whistlebot)**.
+
+for very rough wireframes, please see the wireframes folder!
 
