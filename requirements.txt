@@ -1,5 +1,6 @@
-REQUIREMENTS
-
-PYTHON PACKAGES
-pip install quart
-pip install Quart-OAuth2-Discord.py
+quart >= 0.14.1
+pymongo >= 3.11.2
+Quart-Discord >= 2.1.4
+discord.py >= 1.6.0
+cachetools >= 4.2.1
+Async-OAuthlib >= 0.0.9
