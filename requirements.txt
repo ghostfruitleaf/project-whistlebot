@@ -1,0 +1,5 @@
+REQUIREMENTS
+
+PYTHON PACKAGES
+pip install quart
+pip install Quart-OAuth2-Discord.py
