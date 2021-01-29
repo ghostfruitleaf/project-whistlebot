@@ -1,6 +1,10 @@
 quart >= 0.14.1
 pymongo >= 3.11.2
+motor >= 2.3.0
+Quart-Motor >= 2.4.4
+pytest >= 6.2.2
 Quart-Discord >= 2.1.4
+Quart-CORS >= 0.3.0
 discord.py >= 1.6.0
 cachetools >= 4.2.1
 Async-OAuthlib >= 0.0.9
