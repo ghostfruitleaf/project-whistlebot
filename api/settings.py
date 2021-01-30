@@ -1,0 +1,12 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
+DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI")
+DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+DEBUG = os.getenv("DEBUG")
+OAUTHLIB_INSECURE_TRANSPORT = os.getenv("OAUTHLIB_INSECURE_TRANSPORT")
+SECRET_KEY = os.getenv("SECRET_KEY")
