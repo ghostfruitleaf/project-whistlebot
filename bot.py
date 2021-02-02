@@ -73,7 +73,9 @@ def create_report(report, reported_message):
     # report layout
     report = {'doc_type': 'report',  # indicates REPORT
               'read': False,  # indicates if report has been marked read
-              'action': '',  # indicates resulting action taken
+              'action': {'auth_user_id': 0,
+                         'timestamp': '',
+                         'action_taken': ''},  # resulting action taken and user id of person who did it
               'server_id': report.guild_id,  # id of server message was sent in
               'report_id': report.id,  # id of report message (in case of system abuse)
               'report_time': report.timestamp,  # time of report
@@ -110,6 +112,7 @@ def create_member_doc(member):
     # - actions hash, tuples/pairs with # + reasons
     # - all flags
     # - server/notes hash -- yeah we might need a giant hash for all this :(
+    # - avatar url
     member = {}
     print(member)
 
