@@ -72,7 +72,7 @@ def create_report(report, reported_message):
 
     # report layout
     report = {'doc_type': 'report',  # indicates REPORT
-              'read': False,  # indicates if report has been marked read
+              'reviewed': [False, 0],  # indicates if report has been reviewed and by whom (tuple/pair)?
               'action': {'auth_user_id': 0,
                          'timestamp': '',
                          'action_taken': ''},  # resulting action taken and user id of person who did it
@@ -82,14 +82,15 @@ def create_report(report, reported_message):
               'reporter_user_id': report.author.id,  # id of reporter (for fast access)
               'report_reason': report_content,  # reason for reporting
               'flags': flags,  # array of flags identified from reason text
-              'reported_message': {  # info of REPORTED MESSAGE
+              'reported_message': {  # info of REPORTED MESSAGE (should this be separated into another doc?)
                   'reported_user_id': reported_message.author.id,  # id of reported user (access)
                   'reported_message': reported_message.content,  # content of ORIGINAL reported message
                   'reported_embed': reported_message.embeds,  # any embeds in message
                   'reported_attachments': reported_message.attachments,  # any attachments in message
                   'reported_timestamp': reported_message.timestamp,  # time message sent
                   'reported_edited_timestamp': reported_message.edited_timestamp,  # check for edit attempts
-                  'reported_edits': []  # array of edited messages as detected by bot on checks
+                  'reported_edits': [],  # array of edited messages as detected by bot on checks
+                  'deleted': False  # confirms if message is deleted
                    }
               }
     print(report)
@@ -98,11 +99,12 @@ def create_report(report, reported_message):
 
 
 def create_member_doc(member):
-    # info needed:
+    # info needed(?):
     # - id
     # - name
     # - servers
         # per server:
+        # - status (left, kicked, banned, etc.)
         # - nickname(s)
         # - roles
         # - user agreement tuple/pair ("signed agreement"/"admin approved", need both to flag)
@@ -112,7 +114,8 @@ def create_member_doc(member):
     # - actions hash, tuples/pairs with # + reasons
     # - all flags
     # - server/notes hash -- yeah we might need a giant hash for all this :(
-    # - avatar url
+    # - avatar url (API call)
+    # - deleted?
     member = {}
     print(member)
 
@@ -121,9 +124,9 @@ def create_user_profile(member):
     # info needed:
     # - id
     # - name
-    # - owned servers
-    # - authorized servers
-    # - way to link to member doc??
+    # - owned servers (API call)
+    # - authorized servers (narrow from API call and database info) - should have keys of permissions in UI
+    # - way to link to member doc?? do they need one?
     # - reference roles in server profile per server, might need a dict?
     user = {}
     print(user)
