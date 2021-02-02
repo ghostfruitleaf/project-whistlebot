@@ -7,13 +7,18 @@ project whistlebot is an experiment to explore a possible reporting system/web i
 
 ## what technologies does whistlebot use? 
 - python
-   - discord.py 
+   - discord.py 1.6.0
+   - [hikari](https://github.com/hikari-py/hikari)
+   - [hikari-lightbulb](https://github.com/tandemdude/hikari-lightbulb)
 - quart
+   - [quart-discord](https://github.com/jnawk/Quart-Discord)
+   - [quart-motor](https://github.com/marirs/quart-motor/)
 - mongodb
+   - pymongo
 - vue.js
 
 ## what if i decide to use whistlebot? 
-whistlebot will be planned to anticipate the worst, but assume the best -- that means that while there will (hopefully) be safeguards from using whistlebot's data with malicious intent, at this point in time, project whistlebot cannot be held responsible for misuse of its critical features in moderating servers.
+whistlebot will be planned to anticipate the worst, but assume the best -- that means that while there will (hopefully) be safeguards from using whistlebot's data with malicious intent, at this point in time, project whistlebot cannot be held responsible for misuse of its critical features in moderating servers, but will have some features included to help prevent members who may try to abuse the system.
 
 ### installation 
 (TO BE ADDED LATER)
