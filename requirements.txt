@@ -14,5 +14,9 @@ cachetools >= 4.2.1
 Async-OAuthlib >= 0.0.9
 python-dotenv >= 0.15.0
 
-# discord.py tools
+# discord.py tools (v6)
 discord.py >= 1.6.0
+
+# discord API v8 (for replies)
+hikari >= 2.0.0dev100
+hikari-lightbulb >= 0.0.58
