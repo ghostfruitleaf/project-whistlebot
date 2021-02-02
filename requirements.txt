@@ -14,5 +14,5 @@ cachetools >= 4.2.1
 Async-OAuthlib >= 0.0.9
 python-dotenv >= 0.15.0
 
-# discord.py
+# discord.py tools
 discord.py >= 1.6.0
