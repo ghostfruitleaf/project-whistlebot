@@ -18,17 +18,8 @@ app.config["DISCORD_CLIENT_SECRET"] = DISCORD_CLIENT_SECRET
 app.config["DISCORD_REDIRECT_URI"] = DISCORD_REDIRECT_URI  # add this to discord bot and edit env when deployed!
 app.config["DISCORD_BOT_TOKEN"] = DISCORD_BOT_TOKEN
 
+# set up discord API connection
 discord = DiscordOAuth2Session(app)
-
-# attempt to start task
-# this allows the bot to run alongside the server, but it cannot hear commands
-# @app.before_serving
-# async def startup():
-#    loop = asyncio.get_event_loop()
-#    app.discord_client = DiscordClient()
-#    await app.discord_client.bot.login(DISCORD_BOT_TOKEN)
-#    loop.create_task(app.discord_client.bot.connect())
-
 
 
 # MODIFIED TEST CODE FROM QUART-DISCORD:
@@ -37,16 +28,15 @@ discord = DiscordOAuth2Session(app)
 async def index():
     if not await discord.authorized:
         return f"""
-        {HYPERLINK.format(url_for(".login"), "Login")} <br />
-        {HYPERLINK.format(url_for(".invite_bot"), "Invite Bot with permissions 8")} <br />
-        {HYPERLINK.format(url_for(".invite_oauth"), "Authorize with oauth and bot invite")}
+        {HYPERLINK.format(url_for(".login"), "login")} <br />
+        {HYPERLINK.format(url_for(".invite_oauth"), "login and add bot to server")}
         """
 
     return f"""
     {HYPERLINK.format(url_for(".me"), "@ME")}<br />
-    {HYPERLINK.format(url_for(".logout"), "Logout")}<br />
-    {HYPERLINK.format(url_for(".user_guilds"), "My Servers")}<br />
-    {HYPERLINK.format(url_for(".invite_bot"), "Invite Bot with permissions 8")} <br /> 
+    {HYPERLINK.format(url_for(".logout"), "logout")}<br />
+    {HYPERLINK.format(url_for(".user_guilds"), "servers")}<br />
+    {HYPERLINK.format(url_for(".invite_bot"), "add whistlebot to new server")} <br /> 
     """
 
 
