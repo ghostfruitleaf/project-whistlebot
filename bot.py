@@ -86,14 +86,15 @@ def save_reported_message(reported_message, report_id, reporter_id):
 
     query = {'reported_message_id': int(reported_message.id)}
     find_exhibit = db.exhibits.find_one(query)
-
     # reported message exists; object is returned
     if find_exhibit is not None:
 
         # check to see if repeat reporter
         reporter_exists = False
-        for id_num in find_exhibit['reports']:
-            if db.reports.find_one({'reporter_id': id_num}):
+        reports = find_exhibit['reports']
+
+        for id_num in reports:
+            if db.reports.find_one({'report_id': id_num, 'reporter_id': reporter_id}):
                 reporter_exists = True
                 break
 
@@ -101,9 +102,8 @@ def save_reported_message(reported_message, report_id, reporter_id):
         if not reporter_exists:
             # new values
             rpt_times = find_exhibit['times_reported'] + 1
-            all_rpts = find_exhibit['reports'].append(report_id)
-
-            update_val = {'$set': {'times_reported': rpt_times, 'reports': all_rpts}}
+            reports = reports.append(int(report_id))
+            update_val = {'$set': {'times_reported': rpt_times, 'reports': reports}}
             db.exhibits.update_one({'reported_message_id': int(reported_message.id)}, update_val)
 
         # tell reporter not to do that, please -- this should help prevent spam
@@ -126,10 +126,10 @@ def create_report(report, reported_message):
     - triggers creation of server document in database if not already existing
     - triggers creation of users if not already in database AFTER creation of report.
     """
-    rptd_msg = save_reported_message(reported_message, report.id, report.author.id) # get tuple code
+    rptd_msg = save_reported_message(reported_message, report.id, report.author.id)  # get tuple code
 
     # no message saved successfully
-    if rptd_msg[0] and rptd_msg[0] < 1:
+    if rptd_msg[0] and rptd_msg[1] < 1:
         return None
     # message saved
     elif rptd_msg[0]:
@@ -156,7 +156,6 @@ def create_report(report, reported_message):
                   'flag_tags': flags,  # array of flags identified from reason text
                   'reported_message_id': reported_message.id
                   }
-
 
         if not db.reports.insert_one(report).acknowledged: return False
         # check that server is in database
@@ -192,7 +191,7 @@ def create_member_doc(member, reports=0):
 def create_user_profile(user):
     new_admin = {
 
-                }
+    }
     # info needed:
     # - id
     # - name
@@ -296,7 +295,8 @@ async def flag(ctx):
                 msg = 'thank you for your report -- it is currently under review by the admin team.'
 
     # send msg
-    await ctx.message.author.send(msg)
+    await ctx.message.author.send("**whistlebot update!**\n" + msg)
+
 
 # view status in server according to whistlebot
 
