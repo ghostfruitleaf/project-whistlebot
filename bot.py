@@ -166,10 +166,25 @@ def create_report(report, reported_message):
         return False
 
 
-def create_member_doc(member, reports=0):
+def create_member_doc(user, guild, reports=0):
+    """
+    Accepts a user and ensures user is in database.
+    Ensures that user has a profile associated with context guild (from calling guild-only bot methods)
+    """
+    user = {}
+    guild_profile = {}
+    # first check for user
+    get_user = db.users.find_one({'discord_id': user.id})
+
+    # create new user profile
+    if get_user is None:
+        user = {'discord_id': user.id,
+                  'total_reports': reports,
+                  'server_activity': [],
+                  'deleted': False
+                  }
     # info needed(?):
     # - id
-    # - name
     # - servers
     # per server:
     # - status (left, kicked, banned, etc.)
@@ -323,7 +338,7 @@ async def report_update(ctx, report_id):
 
     if user matches reported, lists server,  reason for report and message that was reported.
         - if action taken, lists action taken but NOT by whom (to prevent retaliation)
-        - encourages reconciliation with mods of server
+        - encourages mediation with mods of server
     """
 
     ctx.message.author.send('WIP')
