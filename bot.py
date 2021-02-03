@@ -54,19 +54,19 @@ def add_server(guild):
     return True if db.servers.insert_one(server_doc).acknowledged else False
 
 
-def save_reported_message(reported_message, report_id):
+def save_reported_message(reported_message, report_id, reporter_id):
     """
     save_reported_message(reported_message)
 
     - creates and saves document for reported message as helper method of create_report.
     - does not create new reported_message if already in db, but increments times reported.
-    - returns True if saved to/found in database, False otherwise
+    - returns True, 1 if saved to/found in database, False, 0 otherwise
+    - returns True, 0 if found in database but is a duplicate report (same user reports same message)
     - ^ this allows another way to increase the priority of reports
     """
 
     # grab the information first
     exhibit = {  # info of REPORTED MESSAGE
-        'doc_type': 'reported_message',
         'reported_message_id': reported_message.id,
         'reported_user_id': reported_message.author.id,  # id of reported user (access)
         'reported_message': reported_message.content,  # content of ORIGINAL reported message
@@ -79,7 +79,7 @@ def save_reported_message(reported_message, report_id):
         # array of edited messages as detected by bot on checks
         'deleted': False,  # confirms if message is deleted
         'times_reported': 1,
-        'reports': [report_id]  # reports made about message
+        'reports': [int(report_id)]  # reports made about message
     }
 
     # check database
@@ -108,12 +108,12 @@ def save_reported_message(reported_message, report_id):
 
         # tell reporter not to do that, please -- this should help prevent spam
         else:
-            return None
-        return True
+            return True, 0
+        return True, 1
 
     # add to db
     else:
-        return True if db.exhibits.insert_one(exhibit).acknowledged else False
+        return (True, 1) if db.exhibits.insert_one(exhibit).acknowledged else (False, 0)
 
 
 def create_report(report, reported_message):
@@ -126,11 +126,15 @@ def create_report(report, reported_message):
     - triggers creation of server document in database if not already existing
     - triggers creation of users if not already in database AFTER creation of report.
     """
+    rptd_msg = save_reported_message(reported_message, report.id, report.author.id) # get tuple code
 
-    if save_reported_message(reported_message, report.id):
-
+    # no message saved successfully
+    if rptd_msg[0] and rptd_msg[0] < 1:
+        return None
+    # message saved
+    elif rptd_msg[0]:
         # generate report
-        report_content = report.content.replace('!flag ', '', 1)
+        report_content = report.content.replace('!flag', '', 1)
 
         # find flags
         flags = []
@@ -140,24 +144,26 @@ def create_report(report, reported_message):
             if word in report_content.lower(): flags.append(word)
 
         # ALWAYS generate report if saved
-        report = {'doc_type': 'report',  # indicates REPORT
-                  'reviewed': [False, None],  # indicates if report has been reviewed and by who?
+        report = {'reviewed': [False, None],  # indicates if report has been reviewed and by who?
                   'action': {'auth_user_id': None,
                              'timestamp': '',
                              'action_taken': ''},  # resulting action taken and user id of person who did it
                   'server_id': report.guild_id,  # id of server message was sent in
                   'report_id': report.id,  # id of report message (in case of system abuse)
                   'report_time': report.timestamp,  # time of report
-                  'reporter_user_id': report.author.id,  # id of reporter (for fast access)
+                  'reporter_id': report.author.id,  # id of reporter (for fast access)
                   'report_reason': report_content,  # reason for reporting
                   'flag_tags': flags,  # array of flags identified from reason text
                   'reported_message_id': reported_message.id
                   }
+
+
         if not db.reports.insert_one(report).acknowledged: return False
         # check that server is in database
         # check that both users are in database (needs finally)
         return True
     else:
+        # indicates attempt to double report a message
         return False
 
 
@@ -183,7 +189,10 @@ def create_member_doc(member, reports=0):
     print(member)
 
 
-def create_user_profile(member):
+def create_user_profile(user):
+    new_admin = {
+
+                }
     # info needed:
     # - id
     # - name
