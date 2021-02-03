@@ -20,7 +20,6 @@ creates new objects in whistlebot database.
 """
 
 
-# NOTE: NEEDS TO BE SECURED SOMEHOW??? HTTPS CONNECTION MAYBE?
 def add_server(guild):
     """
     add_server(guild)
@@ -40,7 +39,9 @@ def add_server(guild):
                   'settings': {'kick_autoban': None,  # number of kicks that trigger an autoban
                                'autoban_flags': [],  # flags that trigger autobans - REQUIRES DOC/VALIDATION
                                'user_agrmt_req': False,  # initialize user agreement requirement
-                               'user_agrmt_channel_id': int(guild.system_channel_id) if not guild.system_channel_id is None else 0,  # channel for user agreement
+                               'user_agrmt_channel_id': int(
+                                   guild.system_channel_id) if not guild.system_channel_id is None else 0,
+                               # channel for user agreement
                                'user_agrmt_message_id': None,  # message to check for agreement
                                'settings_roles': [],  # roles that can change server settings
                                'settings_users': [],  # roles that can change server users
@@ -79,7 +80,7 @@ def save_reported_message(reported_message, report_id, reporter_id):
         # array of edited messages as detected by bot on checks
         'deleted': False,  # confirms if message is deleted
         'times_reported': 1,
-        'reports': [report_id] # reports made about message
+        'reports': [report_id]  # reports made about message
     }
 
     print(reported_message)
@@ -181,7 +182,6 @@ may need to optimize as an ensure function?
 bot = lightbulb.Bot(token=settings.DISCORD_BOT_TOKEN,
                     prefix='!',
                     insensitive_commands=True)
-
 """
 EVENT LISTENERS
 """
@@ -189,10 +189,25 @@ EVENT LISTENERS
 
 @bot.listen(hikari.GuildAvailableEvent)
 async def check_server_profile(event):
-    find_server = db.reviews.find_one({'server_id': event.guild.id})
-    add_server(event.guild) if find_server is None else print("server already in db")
+    """
+    Checks that servers that whistlebot is in has profiles in database.
+    Creates new profile if one not currently found, or once whistlebot joins database.
+    """
+    # check if server is in db
+    find_server = db.servers.find_one({'server_id': int(event.guild.id)})
 
+    # get owner object in case message needed to send alert
+    get_id = event.guild.owner_id
+    owner = await bot.rest.fetch_user(user=get_id)
 
+    # add new server profile to db
+    if find_server is None:
+        add_new_server = add_server(event.guild)
+
+        # sends warning message that server profile was not added to system.
+        if not add_new_server: await owner.send('whistlebot was unable to create a new profile for the following '
+                                                f'server: {event.guild.name}. please try re-adding the bot or'
+                                                'adding an issue at https://github.com/PaulineChane/project-whistlebot.')
 
 
 """
@@ -220,7 +235,6 @@ async def flag(ctx):
 
         # get reported message
         msg_ref = ctx.message.referenced_message
-        print(msg_ref.content)  # debug statement
 
         # when/if implemented, flag authorization check
         # parameters for attempt to retaliate against a report?
@@ -248,14 +262,6 @@ async def flag(ctx):
 # view list of flags
 
 # view status in server according to whistlebot
-
-# DM user test
-@bot.command()
-async def ping(ctx):
-    """
-    Test function.
-    """
-    await ctx.message.author.send('pong')
 
 
 # run bot
