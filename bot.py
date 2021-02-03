@@ -28,10 +28,9 @@ def add_server(guild):
     - accepts a discord Guild object to create a new server profile document in the database.
     - triggered through report from a server with no standing reports or through addition of
       server in user interface.
-    - returns True if server profile added to database; false otherwise
+    - returns True if server profile added to database; False otherwise
     """
-    server_doc = {'doc_type': 'server',  # server doc
-                  'server_name': guild.name,  # name of server
+    server_doc = {'server_name': guild.name,  # name of server
                   'server_id': int(guild.id),  # server id
                   'auth_users': [int(guild.owner_id)],  # users authorized to review reports
                   'auth_roles': [],  # roles authorized to review reports
@@ -50,7 +49,8 @@ def add_server(guild):
                                'alert_channel_id': None  # id of channel to receive reports, if specified
                                }
                   }
-    return True
+
+    return True if db.servers.insert_one(server_doc).acknowledged else False
 
 
 def save_reported_message(reported_message, report_id, reporter_id):
@@ -79,7 +79,7 @@ def save_reported_message(reported_message, report_id, reporter_id):
         # array of edited messages as detected by bot on checks
         'deleted': False,  # confirms if message is deleted
         'times_reported': 1,
-        'reports': [report_id]
+        'reports': [report_id] # reports made about message
     }
 
     print(reported_message)
@@ -189,7 +189,10 @@ EVENT LISTENERS
 
 @bot.listen(hikari.GuildAvailableEvent)
 async def check_server_profile(event):
-    print(add_server(event.guild))
+    find_server = db.reviews.find_one({'server_id': event.guild.id})
+    add_server(event.guild) if find_server is None else print("server already in db")
+
+
 
 
 """
