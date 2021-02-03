@@ -21,6 +21,24 @@ app.config["DISCORD_BOT_TOKEN"] = DISCORD_BOT_TOKEN
 # set up discord API connection
 discord = DiscordOAuth2Session(app)
 
+def create_mod_profile(user):
+    """
+    Given a user, creates a new profile for a user authorized to access the interface for a
+    particular server.
+    """
+    new_mod = {
+
+    }
+    # info needed:
+    # - id
+    # - name
+    # - owned servers (API call)
+    # - authorized servers (narrow from API call and database info) - should have keys of permissions in UI
+    # - way to link to member doc?? do they need one?
+    # - reference roles in server profile per server, might need a dict?
+    user = {}
+    print(user)
+
 
 # MODIFIED TEST CODE FROM QUART-DISCORD:
 # Original code from https://github.com/jnawk/Quart-Discord/blob/master/tests/test_app.py

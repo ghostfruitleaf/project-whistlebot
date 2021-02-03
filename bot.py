@@ -106,7 +106,7 @@ def save_reported_message(reported_message, report_id, reporter_id):
             update_val = {'$set': {'times_reported': rpt_times, 'reports': reports}}
             db.exhibits.update_one({'reported_message_id': int(reported_message.id)}, update_val)
 
-        # tell reporter not to do that, please -- this should help prevent spam
+        # flag to tell reporter not re-report a message, please -- this should help prevent spam
         else:
             return True, 0
         return True, 1
@@ -165,57 +165,56 @@ def create_report(report, reported_message):
         # indicates attempt to double report a message
         return False
 
+def update_member_profile(user, guild, report_status=0):
+    """
+    For a provided user (likely a recently reported/reporting user),
+    ensures an existing member profile doc for a provided guild.
+    This will include information such as:
+        - Number of reports received
+        - Number of reports made
+        - Current status (kicked, banned, left, active, etc.)
+        - User agreement status (if enabled by mods)
+        - Nicknames in server
+        - Notes (for admin purposes)
+        - Roles
 
-def create_member_doc(user, guild, reports=0):
+    report_status codes:
+        0 - no report, maintenance only
+        1 - report made against user
+        2 - report made by user
+    """
+
+
+def update_user_doc(user, guild, report_status=0):
     """
     Accepts a user and ensures user is in database.
     Ensures that user has a profile associated with context guild (from calling guild-only bot methods)
+    Returns True if and only if both user/member profile docs are successfully created/updated
+
+    report_status codes:
+        0 - no report, maintenance only
+        1 - report made against user
+        2 - report made by user
     """
-    user = {}
-    guild_profile = {}
     # first check for user
     get_user = db.users.find_one({'discord_id': user.id})
 
     # create new user profile
     if get_user is None:
-        user = {'discord_id': user.id,
-                  'total_reports': reports,
-                  'server_activity': [],
-                  'deleted': False
-                  }
-    # info needed(?):
-    # - id
-    # - servers
-    # per server:
-    # - status (left, kicked, banned, etc.)
-    # - nickname(s)
-    # - roles
-    # - user agreement tuple/pair ("signed agreement"/"admin approved", need both to flag)
-    # - num times attempted to flag when not allowed
-    # - total reports by server (dict)
-    # - array of report ids?????
-    # - actions hash, tuples/pairs with # + reasons
-    # - all flags
-    # - server/notes hash -- yeah we might need a giant hash for all this :(
-    # - avatar url (API call)
-    # - deleted?
-    member = {}
-    print(member)
+        new_user = {'discord_id': user.id,
+                'member_profiles': [],
+                'deleted': False
+                }
+        added_user = db.users.insert_one(new_user)
+
+        if not added_user.acknowledged:
+            return False
+
+    # update/create member
+    return True if update_member_profile(user, guild, report_status) else False;
 
 
-def create_user_profile(user):
-    new_admin = {
 
-    }
-    # info needed:
-    # - id
-    # - name
-    # - owned servers (API call)
-    # - authorized servers (narrow from API call and database info) - should have keys of permissions in UI
-    # - way to link to member doc?? do they need one?
-    # - reference roles in server profile per server, might need a dict?
-    user = {}
-    print(user)
 
 
 """
@@ -323,6 +322,8 @@ async def status(ctx, arg):
     - reporter shows # reports/server, and # reports that resulted in an action
     - reports shows # times a user was reported/server, and # of each type of action taken against them/server
     """
+    ctx.message.author.send('WIP')
+
 
 @bot.command()
 async def report_update(ctx, report_id):
