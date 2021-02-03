@@ -30,8 +30,8 @@ def add_server(guild):
     - returns True if server profile added to database; False otherwise
     """
     server_doc = {'server_name': guild.name,  # name of server
-                  'server_id': int(guild.id),  # server id
-                  'auth_users': [int(guild.owner_id)],  # users authorized to review reports
+                  'server_id': guild.id,  # server id
+                  'auth_users': [guild.owner_id],  # users authorized to review reports
                   'auth_roles': [],  # roles authorized to review reports
                   'flagger_roles': [],  # roles authorized to flag messages
                   'flag_tags': [],  # tags to attach to reports
@@ -39,8 +39,8 @@ def add_server(guild):
                   'settings': {'kick_autoban': None,  # number of kicks that trigger an autoban
                                'autoban_flags': [],  # flags that trigger autobans - REQUIRES DOC/VALIDATION
                                'user_agrmt_req': False,  # initialize user agreement requirement
-                               'user_agrmt_channel_id': int(
-                                   guild.system_channel_id) if not guild.system_channel_id is None else 0,
+                               'user_agrmt_channel_id':
+                                   guild.system_channel_id if not guild.system_channel_id is None else 0,
                                # channel for user agreement
                                'user_agrmt_message_id': None,  # message to check for agreement
                                'settings_roles': [],  # roles that can change server settings
@@ -65,7 +65,7 @@ def save_reported_message(reported_message, report_id):
     """
 
     # grab the information first
-    exhibit = {  # info of REPORTED MESSAGE (should this be separated into another doc?)
+    exhibit = {  # info of REPORTED MESSAGE
         'doc_type': 'reported_message',
         'reported_message_id': reported_message.id,
         'reported_user_id': reported_message.author.id,  # id of reported user (access)
@@ -83,13 +83,36 @@ def save_reported_message(reported_message, report_id):
     }
 
     # check database
-    find_exhibit = db.exhibits.find_one({'reported_message_id': int(reported_message.id)})
+
+    query = {'reported_message_id': int(reported_message.id)}
+    find_exhibit = db.exhibits.find_one(query)
+
     # reported message exists; object is returned
     if find_exhibit is not None:
-        find_exhibit['times_reported'] += 1
-        find_exhibit['reports'].append(report_id)
+
+        # check to see if repeat reporter
+        reporter_exists = False
+        for id_num in find_exhibit['reports']:
+            if db.reports.find_one({'reporter_id': id_num}):
+                reporter_exists = True
+                break
+
+        # don't update unless it's a new reporter
+        if not reporter_exists:
+            # new values
+            rpt_times = find_exhibit['times_reported'] + 1
+            all_rpts = find_exhibit['reports'].append(report_id)
+
+            update_val = {'$set': {'times_reported': rpt_times, 'reports': all_rpts}}
+            db.exhibits.update_one({'reported_message_id': int(reported_message.id)}, update_val)
+
+        # tell reporter not to do that, please -- this should help prevent spam
+        else:
+            return None
         return True
-    else: # add to db
+
+    # add to db
+    else:
         return True if db.exhibits.insert_one(exhibit).acknowledged else False
 
 
@@ -104,15 +127,17 @@ def create_report(report, reported_message):
     - triggers creation of users if not already in database AFTER creation of report.
     """
 
-    if save_reported_message(reported_message, report.id, report.author.id):
+    if save_reported_message(reported_message, report.id):
 
         # generate report
         report_content = report.content.replace('!flag ', '', 1)
+
+        # find flags
         flags = []
-        # server_flags = get from DB
-        # for word in flags:
-        #     # add word in flags if found in message contents
-        #     # via substring
+        server_flags = db.servers.find_one({'server_id': int(report.guild_id)})
+
+        for word in server_flags:
+            if word in report_content.lower(): flags.append(word)
 
         # ALWAYS generate report if saved
         report = {'doc_type': 'report',  # indicates REPORT
@@ -125,10 +150,10 @@ def create_report(report, reported_message):
                   'report_time': report.timestamp,  # time of report
                   'reporter_user_id': report.author.id,  # id of reporter (for fast access)
                   'report_reason': report_content,  # reason for reporting
-                  'flags': flags,  # array of flags identified from reason text
+                  'flag_tags': flags,  # array of flags identified from reason text
                   'reported_message_id': reported_message.id
                   }
-        print(report)
+        if not db.reports.insert_one(report).acknowledged: return False
         # check that server is in database
         # check that both users are in database (needs finally)
         return True
@@ -230,45 +255,44 @@ async def flag(ctx):
     Please note server moderation may require extra steps before you can use this function.
     """
     msg_type = str(ctx.message.type)  # ensure the message is a reply
-
-    # DM error if no reply found
-    if msg_type == 'DEFAULT':
-        await ctx.message.author.send(
-            '**no report sent!** no message attached -- please reply to the message you wish to flag!')
+    # default message: DM error if no reply found
+    msg = '**no report sent!** please reply to a server message you wish to flag!'
 
     # handle various reply cases
-    elif msg_type == 'REPLY':
+    if msg_type == 'REPLY':
 
         # get reported message
         msg_ref = ctx.message.referenced_message
 
         # when/if implemented, flag authorization check
-        # parameters for attempt to retaliate against a report?
 
-        # not sure about this one yet -- reporting mods in retaliation?
-        if msg_ref.author.id in [
-            int(settings.DISCORD_CLIENT_ID)]:  # do we need to check for an attempt to report a bot?
-            await ctx.message.author.send(
-                'should people be allowed to report mods/admins/owners?')  # CHANGE MESSAGE!?!?!?
+        # don't report the bot
+        if msg_ref.author.id == int(settings.DISCORD_CLIENT_ID):  # do we need to check for an attempt to report a bot?
+            msg = 'do not attempt to report the bot.'
 
         # trying to self-report or report a system user.
         elif ctx.message.author.id == msg_ref.author.id:
-            await ctx.message.author.send('please do not attempt to abuse whistlebot functionality.')
+            msg = 'please do not attempt to abuse whistlebot functionality.'
 
         else:
             # below should only trigger if report is created
-            if create_report(ctx.message, msg_ref):
+            rpt_success = create_report(ctx.message, msg_ref)
+
+            if rpt_success is None:
+                msg = 'we have already received your previous report on this message.'
+            elif not rpt_success:
+                msg = 'we were not able to create a report. please try again.'
+            else:
                 await ctx.message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
-                await ctx.message.author.send(
-                    'thank you for your report -- it is currently under review by the admin team.')
+                msg = 'thank you for your report -- it is currently under review by the admin team.'
 
-
-# help function
-
-# view list of flags
+    # send msg
+    await ctx.message.author.send(msg)
 
 # view status in server according to whistlebot
 
+
+# help function customized, time permitting
 
 # run bot
 bot.run()
