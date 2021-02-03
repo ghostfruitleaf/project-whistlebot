@@ -293,13 +293,40 @@ async def flag(ctx):
             else:
                 await ctx.message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
                 msg = 'thank you for your report -- it is currently under review by the admin team.'
+                msg += f"\nif you wish to see status updates of your report, please type !report_update {ctx.message.id}."
 
     # send msg
     await ctx.message.author.send("**whistlebot update!**\n" + msg)
 
 
 # view status in server according to whistlebot
+@bot.command()
+async def status(ctx, arg):
+    """
+    DMs user with full report of their activity on whistlebot.
+    default without arg will prompt for user to type !status reporter or !status reports
+    - reporter shows # reports/server, and # reports that resulted in an action
+    - reports shows # times a user was reported/server, and # of each type of action taken against them/server
+    """
 
+@bot.command()
+async def report_update(ctx, report_id):
+    """
+    DMs user with information about a particular report in the database.
+    if no ID listed, prompts for a report_id
+    if no ID found, displays error that no report was found (or that it may have been *deleted)
+    * for now, although CRUD would prefer otherwise, for accountability reason only the repo owner
+        can delete entries.
+
+    if user matches reporter, lists server, user reported and if any actions were taken (if none, encourages to contact mods)
+        - if action taken, lists action taken and by whom and thanks user
+
+    if user matches reported, lists server,  reason for report and message that was reported.
+        - if action taken, lists action taken but NOT by whom (to prevent retaliation)
+        - encourages reconciliation with mods of server
+    """
+
+    ctx.message.author.send('WIP')
 
 # help function customized, time permitting
 
