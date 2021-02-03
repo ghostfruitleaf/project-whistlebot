@@ -54,7 +54,7 @@ def add_server(guild):
     return True if db.servers.insert_one(server_doc).acknowledged else False
 
 
-def save_reported_message(reported_message, report_id, reporter_id):
+def save_reported_message(reported_message, report_id):
     """
     save_reported_message(reported_message)
 
@@ -63,10 +63,9 @@ def save_reported_message(reported_message, report_id, reporter_id):
     - returns True if saved to/found in database, False otherwise
     - ^ this allows another way to increase the priority of reports
     """
-    # if reported message in database it is not yet, increment times_reported and add report id to reports[]
-    # add check if a message is already reported
-    # else
-    reported_message = {  # info of REPORTED MESSAGE (should this be separated into another doc?)
+
+    # grab the information first
+    exhibit = {  # info of REPORTED MESSAGE (should this be separated into another doc?)
         'doc_type': 'reported_message',
         'reported_message_id': reported_message.id,
         'reported_user_id': reported_message.author.id,  # id of reported user (access)
@@ -83,8 +82,15 @@ def save_reported_message(reported_message, report_id, reporter_id):
         'reports': [report_id]  # reports made about message
     }
 
-    print(reported_message)
-    return True
+    # check database
+    find_exhibit = db.exhibits.find_one({'reported_message_id': int(reported_message.id)})
+    # reported message exists; object is returned
+    if find_exhibit is not None:
+        find_exhibit['times_reported'] += 1
+        find_exhibit['reports'].append(report_id)
+        return True
+    else: # add to db
+        return True if db.exhibits.insert_one(exhibit).acknowledged else False
 
 
 def create_report(report, reported_message):
@@ -97,21 +103,21 @@ def create_report(report, reported_message):
     - triggers creation of server document in database if not already existing
     - triggers creation of users if not already in database AFTER creation of report.
     """
-    # generate report
-    report_content = report.content.replace('!flag ', '', 1)
-    flags = []
-    # server_flags = get from DB
-    # for word in flags:
-    #     # add word in flags if found in message contents
-    #     # via substring
 
-    # report layout
     if save_reported_message(reported_message, report.id, report.author.id):
+
+        # generate report
+        report_content = report.content.replace('!flag ', '', 1)
+        flags = []
+        # server_flags = get from DB
+        # for word in flags:
+        #     # add word in flags if found in message contents
+        #     # via substring
 
         # ALWAYS generate report if saved
         report = {'doc_type': 'report',  # indicates REPORT
-                  'reviewed': [False, 0],  # indicates if report has been reviewed and by who?
-                  'action': {'auth_user_id': 0,
+                  'reviewed': [False, None],  # indicates if report has been reviewed and by who?
+                  'action': {'auth_user_id': None,
                              'timestamp': '',
                              'action_taken': ''},  # resulting action taken and user id of person who did it
                   'server_id': report.guild_id,  # id of server message was sent in
