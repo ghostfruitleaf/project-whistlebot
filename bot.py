@@ -26,6 +26,7 @@ add_server(guild)
   server in user interface. 
 """
 
+
 # NOTE: NEEDS TO BE SECURED SOMEHOW??? HTTPS CONNECTION MAYBE?
 def add_server(guild):
     server_doc = {'doc_type': 'server',  # server doc
@@ -41,14 +42,46 @@ def add_server(guild):
                                'user_agrmt_req': False,  # initialize user agreement requirement
                                'user_agrmt_channel_id': int(guild.system_channel_id),  # channel for user agreement
                                'user_agrmt_message_id': 0,  # message to check for agreement
-                               'settings_roles':[], # roles that can change server settings
-                               'settings_users':[], # roles that can change server users
+                               'settings_roles': [],  # roles that can change server settings
+                               'settings_users': [],  # roles that can change server users
                                'alert_roles': [],  # roles to be alerted of report
                                'alert_users': [],  # users to be alerted of report
                                'alert_channel_id': 0  # id of channel to receive reports, if specified
                                }
                   }
     print(server_doc)
+
+
+"""
+save_reported_message(reported_message)
+
+- creates and saves document for reported message as helper method of create_report.
+- does not create new reported_message if already in db, but increments times reported. 
+- returns True if saved to/found in database, False otherwise
+- ^ this allows another way to increase the priority of reports
+"""
+
+
+def save_reported_message(reported_message, report_id):
+    # if reported message in database it is not yet, increment times_reported and add report id to reports[]
+    # else
+    reported_message = {  # info of REPORTED MESSAGE (should this be separated into another doc?)
+        'doc_type': 'reported_message',
+        'reported_message_id': reported_message.id,
+        'reported_user_id': reported_message.author.id,  # id of reported user (access)
+        'reported_message': reported_message.content,  # content of ORIGINAL reported message
+        'reported_embed': [o.url for o in reported_message.embeds],  # any embeds in message (NEED ARRAY OF OBJECTS)
+        'reported_attachments': [o.url for o in reported_message.attachments],  # any attachments in message (NEED ARRAY OF OBJECTS)
+        'reported_timestamp': reported_message.timestamp,  # time message sent
+        'reported_edited_timestamp': reported_message.edited_timestamp,  # check for edit attempts
+        'reported_edits': [],  # array of edited messages as detected by bot on checks
+        'deleted': False,  # confirms if message is deleted
+        'times_reported': 1,
+        'reports': [report_id]
+    }
+
+    print(reported_message)
+    return True
 
 
 """
@@ -66,49 +99,47 @@ def create_report(report, reported_message):
     # generate report
     report_content = report.content.replace('!flag ', '', 1)
     flags = []
-    for word in report_content.split():
-        # add word in flags if found in message contents
-        print(word)
+    # server_flags = get from DB
+    # for word in flags:
+    #     # add word in flags if found in message contents
+    #     # via substring
 
     # report layout
-    report = {'doc_type': 'report',  # indicates REPORT
-              'reviewed': [False, 0],  # indicates if report has been reviewed and by whom (tuple/pair)?
-              'action': {'auth_user_id': 0,
-                         'timestamp': '',
-                         'action_taken': ''},  # resulting action taken and user id of person who did it
-              'server_id': report.guild_id,  # id of server message was sent in
-              'report_id': report.id,  # id of report message (in case of system abuse)
-              'report_time': report.timestamp,  # time of report
-              'reporter_user_id': report.author.id,  # id of reporter (for fast access)
-              'report_reason': report_content,  # reason for reporting
-              'flags': flags,  # array of flags identified from reason text
-              'reported_message': {  # info of REPORTED MESSAGE (should this be separated into another doc?)
-                  'reported_user_id': reported_message.author.id,  # id of reported user (access)
-                  'reported_message': reported_message.content,  # content of ORIGINAL reported message
-                  'reported_embed': reported_message.embeds,  # any embeds in message
-                  'reported_attachments': reported_message.attachments,  # any attachments in message
-                  'reported_timestamp': reported_message.timestamp,  # time message sent
-                  'reported_edited_timestamp': reported_message.edited_timestamp,  # check for edit attempts
-                  'reported_edits': [],  # array of edited messages as detected by bot on checks
-                  'deleted': False  # confirms if message is deleted
-                   }
-              }
-    print(report)
-    # check that server is in database
-    # check that both users are in database (needs finally)
+    if save_reported_message(reported_message, report.id):
+
+    # ALWAYS generate report if saved
+        report = {'doc_type': 'report',  # indicates REPORT
+                  'reviewed': [False, 0],  # indicates if report has been reviewed and by who?
+                  'action': {'auth_user_id': 0,
+                             'timestamp': '',
+                             'action_taken': ''},  # resulting action taken and user id of person who did it
+                  'server_id': report.guild_id,  # id of server message was sent in
+                  'report_id': report.id,  # id of report message (in case of system abuse)
+                  'report_time': report.timestamp,  # time of report
+                  'reporter_user_id': report.author.id,  # id of reporter (for fast access)
+                  'report_reason': report_content,  # reason for reporting
+                  'flags': flags,  # array of flags identified from reason text
+                  'reported_message': reported_message.id
+                  }
+        print(report)
+        # check that server is in database
+        # check that both users are in database (needs finally)
+        return True
+    else:
+        return False
 
 
-def create_member_doc(member):
+def create_member_doc(member, reports=0):
     # info needed(?):
     # - id
     # - name
     # - servers
-        # per server:
-        # - status (left, kicked, banned, etc.)
-        # - nickname(s)
-        # - roles
-        # - user agreement tuple/pair ("signed agreement"/"admin approved", need both to flag)
-        # - num times attempted to flag when not allowed
+    # per server:
+    # - status (left, kicked, banned, etc.)
+    # - nickname(s)
+    # - roles
+    # - user agreement tuple/pair ("signed agreement"/"admin approved", need both to flag)
+    # - num times attempted to flag when not allowed
     # - total reports by server (dict)
     # - array of report ids?????
     # - actions hash, tuples/pairs with # + reasons
@@ -148,7 +179,7 @@ bot = lightbulb.Bot(token=settings.DISCORD_BOT_TOKEN,
 # flags a message by replying
 @bot.command()
 async def flag(ctx):
-    msg_type = str(ctx.message.type) # ensure the message is a reply
+    msg_type = str(ctx.message.type)  # ensure the message is a reply
 
     # DM error if no reply found
     if msg_type == 'DEFAULT':
@@ -160,23 +191,34 @@ async def flag(ctx):
 
         # get reported message
         msg_ref = ctx.message.referenced_message
-        print(msg_ref.content) # debug statement
+        print(msg_ref.content)  # debug statement
 
         # when/if implemented, flag authorization check
         # parameters for attempt to retaliate against a report?
 
         # not sure about this one yet -- reporting mods in retaliation?
-        if msg_ref.author.id in [int(settings.DISCORD_CLIENT_ID)]:  # do we need to check for an attempt to report a bot?
-            await ctx.message.author.send('should people be allowed to report mods/admins/owners?') # CHANGE MESSAGE!?!?!?
+        if msg_ref.author.id in [
+            int(settings.DISCORD_CLIENT_ID)]:  # do we need to check for an attempt to report a bot?
+            await ctx.message.author.send(
+                'should people be allowed to report mods/admins/owners?')  # CHANGE MESSAGE!?!?!?
 
         # trying to self-report or report a system user.
-        elif ctx.message.author.id == msg_ref.author.id or msg_ref.author.is_system():
+        elif ctx.message.author.id == msg_ref.author.id:
             await ctx.message.author.send('please do not attempt to abuse whistlebot functionality.')
 
         else:
             # below should only trigger if report is created
-            await ctx.message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
-            await ctx.message.send('thank you for your report -- it is currently under review by the admin team.')
+            if create_report(ctx.message, msg_ref):
+                await ctx.message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
+                await ctx.message.author.send(
+                    'thank you for your report -- it is currently under review by the admin team.')
+
+
+# help function
+
+# view list of flags
+
+# view status in server according to whistlebot
 
 # DM user test
 @bot.command()
