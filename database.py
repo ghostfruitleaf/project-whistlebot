@@ -22,8 +22,8 @@ def generate_exhibit(reported_message, report_id):
         'reported_attachments': [o.url for o in reported_message.attachments],
         # any attachments in message (NEED ARRAY OF OBJECTS)
         'reported_timestamp': reported_message.timestamp,  # time message sent
-        'reported_edited_timestamp': reported_message.edited_timestamp,  # check for edit attempts
-        'reported_edits': [] if reported_message.edited_timestamp is None else [reported_message.content],
+        'reported_edits': [] if reported_message.edited_timestamp is None else [(reported_message.edited_timestamp,
+                                                                                 reported_message.content)],
         # array of edited messages as detected by bot on checks
         'deleted': False,  # confirms if message is deleted
         'times_reported': 1,

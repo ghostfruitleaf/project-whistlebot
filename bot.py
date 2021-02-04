@@ -29,7 +29,6 @@ bot = lightbulb.Bot(token=settings.DISCORD_BOT_TOKEN,
 EVENT LISTENERS
 """
 
-
 @bot.listen(hikari.GuildAvailableEvent)
 async def check_server_profile(event):
     """
@@ -53,11 +52,29 @@ async def check_server_profile(event):
                                                 'adding an issue at https://github.com/PaulineChane/project-whistlebot.')
 
 
-@lightbulb.guild_only
 @bot.listen(hikari.GuildMessageUpdateEvent)
-def check_exhibit_update(event):
-    # BLAH
-    print("blah")
+async def check_exhibit_update(event):
+    """
+    Checks for attempt to edit a message that was reported.
+    """
+    query = {'reported_message_id': int(event.message.id)}
+    edited_message = bot_db.db.exhibits.find_one(query)
+
+    # if found, update entry with edits
+    if edited_message is not None:
+        edited_message['reported_edits'].append((event.message.edited_timestamp, event.message.content))
+        bot_db.db.exhibits.update_one(query, {'$set': {'reported_edits': edited_message['reported_edits']}})
+
+        # send message to author
+        await event.message.author.send('**whistlebot update:**\n'
+                                        'it has been brought to our attention that you have attempted to edit'
+                                        f'message {event.message.id}, which has been reported to our database.'
+                                        'the edits have been saved and will be viewable by the server admin.')
+
+
+@bot.listen(hikari.GuildMessageDeleteEvent)
+async def check_exhibit_delete(event):
+    print(event.message_ids)
 
 
 """
