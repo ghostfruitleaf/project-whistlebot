@@ -303,10 +303,10 @@ def post_report_users_update(reporter_check, reported_check):
     Helper method for generating user/guild member profiles upon a report
     """
     msg = ""
-    if not reporter_check[0]: msg += "reporter user info failed to save!\n"
-    if not reporter_check[1]: msg += "reporter member info failed to save!\n"
+    if not reporter_check[0]: msg += "reporting user info failed to save!\n"
+    if not reporter_check[1]: msg += "reporting user member info failed to save!\n"
     if not reported_check[0]: msg += "reported user info failed to save!\n"
-    if not reported_check[1]: msg += "reported member info failed to save!\n"
+    if not reported_check[1]: msg += "reported user member info failed to save!\n"
 
     return "" if not msg else "**whistlebot update!**\n" + msg
 
@@ -414,7 +414,8 @@ async def flag(ctx):
     reported_check = update_user_doc(msg_ref.author, reported_member, guild, 1)
     msg = post_report_users_update(reporter_check, reported_check)
 
-    await owner.send()
+    # only send if issues detected
+    if msg: await owner.send(msg)
 
 # view status in server according to whistlebot
 @bot.command()
