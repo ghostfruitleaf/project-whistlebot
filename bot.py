@@ -54,18 +54,10 @@ def add_server(guild):
     return True if db.servers.insert_one(server_doc).acknowledged else False
 
 
-def save_reported_message(reported_message, report_id, reporter_id):
+def generate_exhibit(reported_message, report_id):
     """
-    save_reported_message(reported_message)
-
-    - creates and saves document for reported message as helper method of create_report.
-    - does not create new reported_message if already in db, but increments times reported.
-    - returns True, 1 if saved to/found in database, False, 0 otherwise
-    - returns True, 0 if found in database but is a duplicate report (same user reports same message)
-    - ^ this allows another way to increase the priority of reports
+    generates exhibit doc to add to db
     """
-
-    # grab the information first
     exhibit = {  # info of REPORTED MESSAGE
         'reported_message_id': reported_message.id,
         'reported_user_id': reported_message.author.id,  # id of reported user (access)
@@ -81,6 +73,21 @@ def save_reported_message(reported_message, report_id, reporter_id):
         'times_reported': 1,
         'reports': [int(report_id)]  # reports made about message
     }
+
+    return exhibit
+
+
+def save_reported_message(reported_message, report_id, reporter_id):
+    """
+    - creates and saves document for reported message as helper method of create_report.
+    - does not create new reported_message if already in db, but increments times reported.
+    - returns True, 1 if saved to/found in database, False, 0 otherwise
+    - returns True, 0 if found in database but is a duplicate report (same user reports same message)
+    - ^ this allows another way to increase the priority of reports
+    """
+
+    # grab the information first
+    exhibit = generate_exhibit(reported_message, report_id)
 
     # check database
 
@@ -116,6 +123,25 @@ def save_reported_message(reported_message, report_id, reporter_id):
         return (True, 1) if db.exhibits.insert_one(exhibit).acknowledged else (False, 0)
 
 
+def generate_report(report, report_content, flags, reported_message):
+    """
+    creates new report to save to db
+    """
+    report = {'reviewed': [False, None],  # indicates if report has been reviewed and by who?
+              'action': {'auth_user_id': None,
+                         'timestamp': '',
+                         'action_taken': ''},  # resulting action taken and user id of person who did it
+              'server_id': report.guild_id,  # id of server message was sent in
+              'report_id': report.id,  # id of report message (in case of system abuse)
+              'report_time': report.timestamp,  # time of report
+              'reporter_id': report.author.id,  # id of reporter (for fast access)
+              'report_reason': report_content,  # reason for reporting
+              'flag_tags': flags,  # array of flags identified from reason text
+              'reported_message_id': reported_message.id
+              }
+    return report
+
+
 def create_report(report, reported_message):
     """
     create_report(report,reported_message)
@@ -144,26 +170,32 @@ def create_report(report, reported_message):
             if word in report_content.lower(): flags.append(word)
 
         # ALWAYS generate report if saved
-        report = {'reviewed': [False, None],  # indicates if report has been reviewed and by who?
-                  'action': {'auth_user_id': None,
-                             'timestamp': '',
-                             'action_taken': ''},  # resulting action taken and user id of person who did it
-                  'server_id': report.guild_id,  # id of server message was sent in
-                  'report_id': report.id,  # id of report message (in case of system abuse)
-                  'report_time': report.timestamp,  # time of report
-                  'reporter_id': report.author.id,  # id of reporter (for fast access)
-                  'report_reason': report_content,  # reason for reporting
-                  'flag_tags': flags,  # array of flags identified from reason text
-                  'reported_message_id': reported_message.id
-                  }
+        new_report = generate_report(report, report_content, flags, reported_message)
 
-        if not db.reports.insert_one(report).acknowledged: return False
+        if not db.reports.insert_one(new_report).acknowledged: return False
         # check that server is in database
         # check that both users are in database (needs finally)
         return True
     else:
         # indicates attempt to double report a message
         return False
+
+
+def generate_member_profile(user, member, guild, report_status=0):
+    """
+    generates new member_profile to save to db
+    """
+    new_member = {'server_id': guild.id,  # guild id
+                  'user_id': user.id,  # user id of member
+                  'reports_received': 1 if report_status is 1 else 0,
+                  'reports_sent': 1 if report_status < 0 else 0,
+                  'user_argmt_status': None,  # this is activated via interface
+                  'server_status': 'active',  # this field needs to come from a tuple constant eventually
+                  'nicknames': [member.nickname],  # start tracking nicknames
+                  'roles': member.role_ids,  # all roles of member
+                  'notes': ''
+                  }
+    return new_member
 
 
 def ensure_member_profile(user, member, guild, report_status=0):
@@ -195,21 +227,15 @@ def ensure_member_profile(user, member, guild, report_status=0):
 
     # create new member profile
     if find_member is None:
-        new_member = {'server_id': guild.id, # guild id
-                      'user_id': user.id, # user id of member
-                      'reports_received': 1 if report_status is 1 else 0,
-                      'reports_sent': 1 if report_status < 0 else 0,
-                      'user_argmt_status': None, # this is activated via interface
-                      'server_status': 'active',  # this field needs to come from a tuple constant eventually
-                      'nicknames': [member.nickname],  # start tracking nicknames
-                      'roles': member.role_ids,  # all roles of member
-                      'notes': ''
-                      }
+        new_member = generate_member_profile(user, member, guild, report_status)
 
         # first ensure profile is added
         if not db.member_profiles.insert_one(new_member).acknowledged: return False
 
-        #
+        # since user exists, we need to update the user object with a query to the new profile
+        get_user = db.discordusers.find_one({'discord_id': int(user.id)})
+        get_user['profiles'].append(query)
+        db.discordusers.update_one({'discord_id': int(user.id)}, {'profiles': get_user['profiles']})
 
     else:  # profile exists
         if report_status is 0: return True  # do nothing if this was not initiated by a report
@@ -229,7 +255,11 @@ def update_user_doc(user, member, guild, report_status=0):
     """
     Accepts a user and ensures user is in database.
     Ensures that user has a profile associated with context guild (from calling guild-only bot methods)
-    Returns True if and only if both user/member profile docs are successfully created/updated
+    Returns:
+        True, True: user and member_profile ensured
+        True, False: only member_profile ensured
+        False, True: only member ensured
+        False, False: user and member_profile NOT ensured
 
     report_status codes: (FOR RECONFIG IN LATER RELEASE)
         0 - no report, maintenance only
@@ -239,22 +269,24 @@ def update_user_doc(user, member, guild, report_status=0):
 
     # first check for user
     get_user = db.users.find_one({'discord_id': user.id})
-
+    user_exists = False
     # create new user profile
     if get_user is None:
         new_user = {'discord_id': user.id,
-                    'profile_ids': [{'server_id': guild.id, 'user_id': user.id}],  # add query just for guild the
+                    'profiles': [{'server_id': guild.id, 'user_id': user.id}],  # add query just for guild the
                     # request came from for now
                     'deleted': False,  # we have other ways to confirm this info
                     'alts': []  # eventually there will be logic added to identify alts for accts
                     }
-        added_user = db.users.insert_one(new_user)
+        added_user = db.discordusers.insert_one(new_user)
 
-        if not added_user.acknowledged:
-            return False
+        if added_user.acknowledged:
+            user_exists = True
 
     # update/create member
-    return True if ensure_member_profile(user, member, guild, report_status) else False;
+    profile_exists = True if ensure_member_profile(user, member, guild, report_status) else False
+
+    return user_exists, profile_exists  # tuple code for updates
 
 
 """
@@ -263,6 +295,21 @@ DATABASE CHECK METHODS
 ensures all users, reports, servers documented in database. 
 may need to optimize as an ensure function? 
 """
+
+
+def post_report_users_update(reporter_check, reported_check):
+    """
+    Prepares message to send to guild owner in event of save failure.
+    Helper method for generating user/guild member profiles upon a report
+    """
+    msg = ""
+    if not reporter_check[0]: msg += "reporter user info failed to save!\n"
+    if not reporter_check[1]: msg += "reporter member info failed to save!\n"
+    if not reported_check[0]: msg += "reported user info failed to save!\n"
+    if not reported_check[1]: msg += "reported member info failed to save!\n"
+
+    return "" if not msg else "**whistlebot update!**\n" + msg
+
 
 """
 DISCORD BOT/METHODS
@@ -275,6 +322,10 @@ may need to optimize as an ensure function?
 bot = lightbulb.Bot(token=settings.DISCORD_BOT_TOKEN,
                     prefix='!',
                     insensitive_commands=True)
+"""
+MISC. ASYNC FUNCTIONS
+"""
+
 """
 EVENT LISTENERS
 """
@@ -330,7 +381,7 @@ async def flag(ctx):
 
         # don't report the bot
         if msg_ref.author.id == int(settings.DISCORD_CLIENT_ID):  # do we need to check for an attempt to report a bot?
-            msg = 'do not attempt to report the bot.'
+            msg = 'do not attempt to report whistlebot.'
 
         # trying to self-report or report a system user.
         elif ctx.message.author.id == msg_ref.author.id:
@@ -352,6 +403,18 @@ async def flag(ctx):
     # send msg
     await ctx.message.author.send("**whistlebot update!**\n" + msg)
 
+    # get guild
+    guild = await bot.rest.fetch_guild(guild=ctx.message.guild_id)
+    reporter_member = await bot.rest.fetch_member(guild=guild.id, user=ctx.message.author.id)
+    reported_member = await bot.rest.fetch_member(guild=guild.id, user=msg_ref.author.id)
+
+    # ensure user info saved
+    owner = bot.rest.fetch_user(user=guild.owner_id)
+    reporter_check = update_user_doc(ctx.message.author, reporter_member, guild, -1)
+    reported_check = update_user_doc(msg_ref.author, reported_member, guild, 1)
+    msg = post_report_users_update(reporter_check, reported_check)
+
+    await owner.send()
 
 # view status in server according to whistlebot
 @bot.command()
