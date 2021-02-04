@@ -10,7 +10,7 @@ import lightbulb
 from database import Database, post_report_users_update
 
 # start db
-db = Database()
+bot_db = Database()
 
 """
 DISCORD BOT/METHODS
@@ -37,7 +37,7 @@ async def check_server_profile(event):
     Creates new profile if one not currently found, or once whistlebot joins database.
     """
     # check if server is in db
-    find_server = db.db.servers.find_one({'server_id': int(event.guild.id)})
+    find_server = bot_db.db.servers.find_one({'server_id': int(event.guild.id)})
 
     # get owner object in case message needed to send alert
     get_id = event.guild.owner_id
@@ -45,12 +45,19 @@ async def check_server_profile(event):
 
     # add new server profile to db
     if find_server is None:
-        add_new_server = db.add_server(event.guild)
+        add_new_server = bot_db.add_server(event.guild)
 
         # sends warning message that server profile was not added to system.
         if not add_new_server: await owner.send('whistlebot was unable to create a new profile for the following '
                                                 f'server: {event.guild.name}. please try re-adding the bot or'
                                                 'adding an issue at https://github.com/PaulineChane/project-whistlebot.')
+
+
+@lightbulb.guild_only
+@bot.listen(hikari.GuildMessageUpdateEvent)
+def check_exhibit_update(event):
+    # BLAH
+    print("blah")
 
 
 """
@@ -99,7 +106,7 @@ async def flag(ctx):
 
         else:
             # below should only trigger if report is created
-            rpt_success = db.create_report(ctx.message, msg_ref)
+            rpt_success = bot_db.create_report(ctx.message, msg_ref)
 
             if rpt_success is None:
                 msg = 'we have already received your previous report on this message.'
@@ -119,8 +126,8 @@ async def flag(ctx):
             reported_member = await bot.rest.fetch_member(guild=guild.id, user=msg_ref.author.id)
 
             # ensure user info saved
-            reporter_check = db.update_user_doc(ctx.message.author, reporter_member, guild, -1)
-            reported_check = db.update_user_doc(msg_ref.author, reported_member, guild, 1)
+            reporter_check = bot_db.update_user_doc(ctx.message.author, reporter_member, guild, -1)
+            reported_check = bot_db.update_user_doc(msg_ref.author, reported_member, guild, 1)
             debug_msg = post_report_users_update(reporter_check, reported_check)
 
             if debug_msg:
