@@ -89,7 +89,7 @@ class Database:
     holds database management methods
     """
     def __init__(self):
-        self.status = ('active', 'kicked', 'left', 'banned')
+        self.status = ('active', 'banned', 'kicked', 'left')
         self.client = MongoClient(settings.CONNECTION_URL)
         self.db = self.client['whistlebot-db']
 

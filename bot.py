@@ -57,6 +57,7 @@ async def check_exhibit_update(event):
     """
     Checks for attempt to edit a message that was reported.
     """
+    # check first if message was reported
     query = {'reported_message_id': int(event.message.id)}
     edited_message = bot_db.db.exhibits.find_one(query)
 
@@ -69,12 +70,42 @@ async def check_exhibit_update(event):
         await event.message.author.send('**whistlebot update:**\n'
                                         'it has been brought to our attention that you have attempted to edit'
                                         f'message {event.message.id}, which has been reported to our database.'
-                                        'the edits have been saved and will be viewable by the server admin.')
+                                        'the edits have been saved and will be viewable by server admins.')
 
 
 @bot.listen(hikari.GuildMessageDeleteEvent)
 async def check_exhibit_delete(event):
-    print(event.message_ids)
+    """
+    Checks for attempt to delete a reported message.
+    """
+    deleted_messages = []
+
+    # in event of bulk delete, check for multiple reported messages
+    for message_id in event.message_ids:
+        query = {'reported_message_id': int(message_id)}
+        get_msg = bot_db.db.exhibits.find_one(query)
+
+        # message was reported!
+        if get_msg is not None:
+            # update db to indicated deleted message
+            bot_db.db.exhibits.update_one(query, {"$set": {'deleted': True}})
+            # add to array of deleted messages
+            deleted_messages.append(str(message_id))
+
+    if deleted_messages:
+        # get author from db
+        first_msg = bot_db.db.exhibits.find_one({'reported_message_id': int(deleted_messages[0])})
+        author = await bot.rest.fetch_user(user=int(first_msg['reported_user_id']))
+
+
+        # gen string of message ids
+        str_ids = ', '.join(deleted_messages)
+
+        # send message to author
+        await author.send('**whistlebot update:**\n'
+                                        'it has been brought to our attention that you have attempted to edit\n'
+                                        f'messages: **{str_ids}**, currently reported to our database.\n'
+                                        'this action will be viewable by server admins.')
 
 
 """
