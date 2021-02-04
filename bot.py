@@ -187,7 +187,7 @@ def generate_member_profile(user, member, guild, report_status=0):
     """
     new_member = {'server_id': guild.id,  # guild id
                   'user_id': user.id,  # user id of member
-                  'reports_received': 1 if report_status is 1 else 0,
+                  'reports_received': 1 if report_status == 1 else 0,
                   'reports_sent': 1 if report_status < 0 else 0,
                   'user_argmt_status': None,  # this is activated via interface
                   'server_status': 'active',  # this field needs to come from a tuple constant eventually
@@ -235,20 +235,20 @@ def ensure_member_profile(user, member, guild, report_status=0):
         # since user exists, we need to update the user object with a query to the new profile
         get_user = db.discordusers.find_one({'discord_id': int(user.id)})
         get_user['profiles'].append(query)
-        db.discordusers.update_one({'discord_id': int(user.id)}, {'profiles': get_user['profiles']})
+        db.discordusers.update_one({'discord_id': int(user.id)}, {"$set": {'profiles': get_user['profiles']}})
 
     else:  # profile exists
-        if report_status is 0: return True  # do nothing if this was not initiated by a report
+        if report_status == 0: return True  # do nothing if this was not initiated by a report
 
         # update with new report counts
         update_dict = {}
-        if report_status is 1:
+        if report_status == 1:
             update_dict = {'reports_received': find_member['reports_received'] + 1}
         elif report_status < 0:
             update_dict = {'reports_sent': find_member['reports_sent'] + 1}
 
-        if report_status is not 0:
-            return True if db.member_profiles.update_one(query, update_dict).acknowledged else False
+        if report_status != 0:
+            return True if db.member_profiles.update_one(query, {"$set": update_dict}).acknowledged else False
 
 
 def update_user_doc(user, member, guild, report_status=0):
@@ -268,7 +268,7 @@ def update_user_doc(user, member, guild, report_status=0):
     """
 
     # first check for user
-    get_user = db.users.find_one({'discord_id': user.id})
+    get_user = db.discordusers.find_one({'discord_id': user.id})
     user_exists = False
     # create new user profile
     if get_user is None:
@@ -282,6 +282,8 @@ def update_user_doc(user, member, guild, report_status=0):
 
         if added_user.acknowledged:
             user_exists = True
+    else:
+        user_exists = True
 
     # update/create member
     profile_exists = True if ensure_member_profile(user, member, guild, report_status) else False
@@ -398,39 +400,40 @@ async def flag(ctx):
             else:
                 await ctx.message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
                 msg = 'thank you for your report -- it is currently under review by the admin team.'
-                msg += f"\nif you wish to see status updates of your report, please type !report_update {ctx.message.id}."
+                msg += f"\nif you wish to see status updates of your report, please type **!report_update {ctx.message.id}.**"
 
-    # send msg
-    await ctx.message.author.send("**whistlebot update!**\n" + msg)
+        # send msg
+        await ctx.message.author.send("**whistlebot update!**\n" + msg)
 
-    # get guild
-    guild = await bot.rest.fetch_guild(guild=ctx.message.guild_id)
-    reporter_member = await bot.rest.fetch_member(guild=guild.id, user=ctx.message.author.id)
-    reported_member = await bot.rest.fetch_member(guild=guild.id, user=msg_ref.author.id)
+        # get guild
+        guild = await bot.rest.fetch_guild(guild=ctx.message.guild_id)
+        reporter_member = await bot.rest.fetch_member(guild=guild.id, user=ctx.message.author.id)
+        reported_member = await bot.rest.fetch_member(guild=guild.id, user=msg_ref.author.id)
 
-    # ensure user info saved
-    owner = bot.rest.fetch_user(user=guild.owner_id)
-    reporter_check = update_user_doc(ctx.message.author, reporter_member, guild, -1)
-    reported_check = update_user_doc(msg_ref.author, reported_member, guild, 1)
-    msg = post_report_users_update(reporter_check, reported_check)
+        # ensure user info saved
+        owner = await bot.rest.fetch_user(user=guild.owner_id)
+        reporter_check = update_user_doc(ctx.message.author, reporter_member, guild, -1)
+        reported_check = update_user_doc(msg_ref.author, reported_member, guild, 1)
+        debug_msg = post_report_users_update(reporter_check, reported_check)
 
-    # only send if issues detected
-    if msg: await owner.send(msg)
+        if debug_msg:
+            await owner.send(debug_msg)
+
 
 # view status in server according to whistlebot
 @bot.command()
-async def status(ctx, arg):
+async def member_status(ctx, *arg):
     """
     DMs user with full report of their activity on whistlebot.
     default without arg will prompt for user to type !status reporter or !status reports
     - reporter shows # reports/server, and # reports that resulted in an action
     - reports shows # times a user was reported/server, and # of each type of action taken against them/server
     """
-    ctx.message.author.send('WIP')
+    await ctx.message.author.send('WIP')
 
 
 @bot.command()
-async def report_update(ctx, report_id):
+async def report_update(ctx, *report_id):
     """
     DMs user with information about a particular report in the database.
     if no ID listed, prompts for a report_id
@@ -446,7 +449,7 @@ async def report_update(ctx, report_id):
         - encourages mediation with mods of server
     """
 
-    ctx.message.author.send('WIP')
+    await ctx.message.author.send('WIP')
 
 
 # help function customized, time permitting
