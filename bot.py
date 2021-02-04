@@ -165,10 +165,14 @@ def create_report(report, reported_message):
         # indicates attempt to double report a message
         return False
 
-def update_member_profile(user, guild, report_status=0):
+
+def ensure_member_profile(user, member, guild, report_status=0):
     """
     For a provided user (likely a recently reported/reporting user),
     ensures an existing member profile doc for a provided guild.
+
+    PRECONDITIONS: user exists in database, user is same as member
+
     This will include information such as:
         - Number of reports received
         - Number of reports made
@@ -178,43 +182,79 @@ def update_member_profile(user, guild, report_status=0):
         - Notes (for admin purposes)
         - Roles
 
-    report_status codes:
+    Returns True if successfully found/created/updated, False if there are database issues
+
+    report_status codes: (FOR RECONFIG IN LATER RELEASE)
         0 - no report, maintenance only
         1 - report made against user
-        2 - report made by user
+        -1 - report made by user
     """
+    # verify user has guild profile
+    query = {'server_id': int(guild.id), 'user_id': int(user.id)}
+    find_member = db.member_profiles.find_one(query)
+
+    # create new member profile
+    if find_member is None:
+        new_member = {'server_id': guild.id, # guild id
+                      'user_id': user.id, # user id of member
+                      'reports_received': 1 if report_status is 1 else 0,
+                      'reports_sent': 1 if report_status < 0 else 0,
+                      'user_argmt_status': None, # this is activated via interface
+                      'server_status': 'active',  # this field needs to come from a tuple constant eventually
+                      'nicknames': [member.nickname],  # start tracking nicknames
+                      'roles': member.role_ids,  # all roles of member
+                      'notes': ''
+                      }
+
+        # first ensure profile is added
+        if not db.member_profiles.insert_one(new_member).acknowledged: return False
+
+        #
+
+    else:  # profile exists
+        if report_status is 0: return True  # do nothing if this was not initiated by a report
+
+        # update with new report counts
+        update_dict = {}
+        if report_status is 1:
+            update_dict = {'reports_received': find_member['reports_received'] + 1}
+        elif report_status < 0:
+            update_dict = {'reports_sent': find_member['reports_sent'] + 1}
+
+        if report_status is not 0:
+            return True if db.member_profiles.update_one(query, update_dict).acknowledged else False
 
 
-def update_user_doc(user, guild, report_status=0):
+def update_user_doc(user, member, guild, report_status=0):
     """
     Accepts a user and ensures user is in database.
     Ensures that user has a profile associated with context guild (from calling guild-only bot methods)
     Returns True if and only if both user/member profile docs are successfully created/updated
 
-    report_status codes:
+    report_status codes: (FOR RECONFIG IN LATER RELEASE)
         0 - no report, maintenance only
         1 - report made against user
-        2 - report made by user
+        -1 - report made by user
     """
+
     # first check for user
     get_user = db.users.find_one({'discord_id': user.id})
 
     # create new user profile
     if get_user is None:
         new_user = {'discord_id': user.id,
-                'member_profiles': [],
-                'deleted': False
-                }
+                    'profile_ids': [{'server_id': guild.id, 'user_id': user.id}],  # add query just for guild the
+                    # request came from for now
+                    'deleted': False,  # we have other ways to confirm this info
+                    'alts': []  # eventually there will be logic added to identify alts for accts
+                    }
         added_user = db.users.insert_one(new_user)
 
         if not added_user.acknowledged:
             return False
 
     # update/create member
-    return True if update_member_profile(user, guild, report_status) else False;
-
-
-
+    return True if ensure_member_profile(user, member, guild, report_status) else False;
 
 
 """
@@ -343,6 +383,7 @@ async def report_update(ctx, report_id):
     """
 
     ctx.message.author.send('WIP')
+
 
 # help function customized, time permitting
 
