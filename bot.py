@@ -35,8 +35,16 @@ EVENT LISTENERS
 UPDATING SERVER INFO
 """
 
+@bot.listen(hikari.GuildLeaveEvent)
+async def clear_server_settings(event):
+    """
+    for now, simple deletes server profile, which for security reasons will be refreshed
+    if server re-adds whistlebot.
 
-# may need server delete function if server removes bot,
+    currently reports pertaining to server are archived, may change to a mass delete.
+    """
+    bot_db.db.servers.delete_one({'server_id': int(event.guild_id)})
+
 
 @bot.listen(hikari.GuildAvailableEvent)
 async def check_server_profile(event):
