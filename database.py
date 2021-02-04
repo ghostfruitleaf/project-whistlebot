@@ -62,7 +62,7 @@ def generate_member_profile(user, member, guild, report_status=0):
                   'reports_sent': 1 if report_status < 0 else 0,
                   'user_argmt_status': None,  # this is activated via interface
                   'server_status': 'active',  # this field needs to come from a tuple constant eventually
-                  'nicknames': [member.nickname],  # start tracking nicknames
+                  'nicknames': [member.nickname] if member.nickname else [],  # start tracking nicknames
                   'roles': member.role_ids,  # all roles of member
                   'notes': ''
                   }

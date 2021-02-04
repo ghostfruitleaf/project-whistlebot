@@ -8,6 +8,7 @@ import settings
 import hikari
 import lightbulb
 from database import Database, post_report_users_update
+from datetime import datetime
 
 # start db
 bot_db = Database()
@@ -20,14 +21,22 @@ may need to optimize as an ensure function?
 """
 
 # initialize bot
+intents = (hikari.Intents.ALL_GUILDS | hikari.Intents.ALL_MESSAGES)
+
 bot = lightbulb.Bot(token=settings.DISCORD_BOT_TOKEN,
                     prefix='!',
-                    insensitive_commands=True)
-
+                    insensitive_commands=True, intents=intents)
 
 """
 EVENT LISTENERS
 """
+
+"""
+UPDATING SERVER INFO
+"""
+
+
+# may need server delete function if server removes bot,
 
 @bot.listen(hikari.GuildAvailableEvent)
 async def check_server_profile(event):
@@ -50,6 +59,11 @@ async def check_server_profile(event):
         if not add_new_server: await owner.send('whistlebot was unable to create a new profile for the following '
                                                 f'server: {event.guild.name}. please try re-adding the bot or'
                                                 'adding an issue at https://github.com/PaulineChane/project-whistlebot.')
+
+
+"""
+MESSAGE UPDATES
+"""
 
 
 @bot.listen(hikari.GuildMessageUpdateEvent)
@@ -97,15 +111,52 @@ async def check_exhibit_delete(event):
         first_msg = bot_db.db.exhibits.find_one({'reported_message_id': int(deleted_messages[0])})
         author = await bot.rest.fetch_user(user=int(first_msg['reported_user_id']))
 
-
         # gen string of message ids
         str_ids = ', '.join(deleted_messages)
 
         # send message to author
         await author.send('**whistlebot update:**\n'
-                                        'it has been brought to our attention that you have attempted to edit\n'
-                                        f'messages: **{str_ids}**, currently reported to our database.\n'
-                                        'this action will be viewable by server admins.')
+                          'it has been brought to our attention that you have attempted to edit\n'
+                          f'messages: **{str_ids}**, currently reported to our database.\n'
+                          'this action will be viewable by server admins.')
+
+
+"""
+MEMBER UPDATES
+"""
+
+@bot.listen(hikari.MemberDeleteEvent)
+async def mark_member_left(event):
+    """
+    maintains server profile of member in db, but marks as left
+    """
+    # check if member is in database
+    query = {'server_id': int(event.guild_id), 'user_id': int(event.user.id)}
+    get_member_profile = bot_db.db.member_profiles.find_one(query)
+
+    if get_member_profile is not None:
+        new_data = {'$set': {'server_status': 'left', 'notes': get_member_profile['notes'] +
+                                                               f'NOTE: left {datetime.now()}'}}
+        bot_db.db.member_profiles.update_one(query, new_data)
+
+
+@bot.listen(hikari.MemberUpdateEvent)
+async def update_member_info(event):
+    """
+    checks if member is in db. if so, adds nickname if nickname changes, refreshes role_id list
+    """
+
+    # check if member is in database
+    query = {'server_id': int(event.guild_id), 'user_id': int(event.member.user.id)}
+    get_member_profile = bot_db.db.member_profiles.find_one(query)
+
+    if get_member_profile is not None:
+        get_member_profile['nicknames'].append(str(event.member.nickname))  # add nickname
+
+        new_data = {'$set': {'nicknames': get_member_profile['nicknames'],
+                             'roles': event.member.role_ids}}  # refresh roles
+
+        bot_db.db.member_profiles.update_one(query, new_data)
 
 
 """
