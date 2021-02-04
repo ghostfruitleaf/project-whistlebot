@@ -28,7 +28,9 @@ bot = lightbulb.Bot(token=settings.DISCORD_BOT_TOKEN,
                     insensitive_commands=True, intents=intents)
 
 """
+
 EVENT LISTENERS
+
 """
 
 """
@@ -185,7 +187,9 @@ async def update_member_info(event):
 
 
 """
+
 COMMANDS
+
 """
 
 
@@ -269,7 +273,7 @@ async def member_status(ctx, mode=None):
     - reporter shows # reports/server, and # reports that resulted in an action
     - reports shows # times a user was reported/server, and # of each type of action taken against them/server
     """
-    await ctx.message.author.send('WIP')
+    await ctx.message.author.send('this is a work in progress for a potential second sprint.')
 
 
 @bot.command()
@@ -292,7 +296,7 @@ async def report_update(ctx, report_id=0):
         - encourages mediation with mods of server
     """
 
-    await ctx.message.author.send('WIP')
+    await ctx.message.author.send('this is a work in progress for a potential second sprint.')
 
 
 # help function customized, time permitting
