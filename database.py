@@ -58,6 +58,7 @@ def generate_member_profile(user, member, guild, report_status=0):
     """
     new_member = {'server_id': guild.id,  # guild id
                   'user_id': user.id,  # user id of member
+                  'joined_at': member.joined_at,
                   'reports_received': 1 if report_status == 1 else 0,
                   'reports_sent': 1 if report_status < 0 else 0,
                   'user_argmt_status': None,  # this is activated via interface

@@ -8,7 +8,7 @@ import settings
 import hikari
 import lightbulb
 from database import Database, post_report_users_update
-from datetime import datetime
+from datetime import datetime, timezone
 
 # start db
 bot_db = Database()
@@ -125,6 +125,22 @@ async def check_exhibit_delete(event):
 MEMBER UPDATES
 """
 
+@bot.listen(hikari.MemberCreateEvent)
+async def find_returning_member(event):
+    """
+    tracks members with reports/who have reported returning to server
+    """
+    query = {'server_id': int(event.guild_id), 'user_id': int(event.user.id)}
+    get_member_profile = bot_db.db.member_profiles.find_one(query)
+
+    # user is a rejoin, refresh roles and make note
+    if get_member_profile is not None:
+        new_data = {'$set': {'server_status': 'active',
+                             'role_ids': event.member.role_ids,
+                             'notes': get_member_profile['notes'] + f' NOTE: rejoined {event.member.joined_at}'}}
+        bot_db.db.member_profiles.update_one(query, new_data)
+
+
 @bot.listen(hikari.MemberDeleteEvent)
 async def mark_member_left(event):
     """
@@ -136,7 +152,7 @@ async def mark_member_left(event):
 
     if get_member_profile is not None:
         new_data = {'$set': {'server_status': 'left', 'notes': get_member_profile['notes'] +
-                                                               f'NOTE: left {datetime.now()}'}}
+                                                               f'NOTE: left {datetime.now(timezone.utc)}'}}
         bot_db.db.member_profiles.update_one(query, new_data)
 
 
@@ -151,7 +167,8 @@ async def update_member_info(event):
     get_member_profile = bot_db.db.member_profiles.find_one(query)
 
     if get_member_profile is not None:
-        get_member_profile['nicknames'].append(str(event.member.nickname))  # add nickname
+        if get_member_profile['nicknames'][-1] != str(event.member.nickname):
+            get_member_profile['nicknames'].append(str(event.member.nickname))  # add nickname if changed
 
         new_data = {'$set': {'nicknames': get_member_profile['nicknames'],
                              'roles': event.member.role_ids}}  # refresh roles
