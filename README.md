@@ -7,11 +7,11 @@ project whistlebot is an experiment to explore a possible reporting system/web i
 
 ## what technologies does whistlebot use? 
 - python
-   - discord.py 1.6.0
+   - discord.py 1.6.0(TO BE REMOVED)
    - [hikari](https://github.com/hikari-py/hikari)
    - [hikari-lightbulb](https://github.com/tandemdude/hikari-lightbulb)
 - quart
-   - [quart-discord](https://github.com/jnawk/Quart-Discord)
+   - [quart-discord](https://github.com/jnawk/Quart-Discord) (TO BE REMOVED)
    - [quart-motor](https://github.com/marirs/quart-motor/)
 - mongodb
    - pymongo
