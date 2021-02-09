@@ -55,12 +55,14 @@ def report_html(reports):
 
         # get member info
         exhibit = app_db.db.exhibits.find_one({'reported_message_id': report['reported_message_id']})
-        reporter = app_db.db.member_profiles.find_one({'user_id': report['reporter_id']})
-        reported = app_db.db.member_profiles.find_one({'user_id': exhibit['reported_user_id']})
+        reporter = app_db.db.discordusers.find_one({'discord_id': report['reporter_id']})
+        reported = app_db.db.discordusers.find_one({'discord_id': exhibit['reported_user_id']})
 
         report_hash = {'report_id': report['report_id'],
                        'reporter_id': report['reporter_id'],
+                       'reporter_name': reporter['discord_name'] + '#' + reporter['discriminator'],
                        'report_time': datetime_from_utc_to_local(report['report_time']),
+                       'reported_name': reported['discord_name'] + '#' + reported['discriminator'],
                        'reported_user_id': exhibit['reported_user_id'],
                        'reported_message': exhibit['reported_message'],
                         'reported_timestamp': datetime_from_utc_to_local(exhibit['reported_timestamp'])
@@ -125,6 +127,7 @@ async def callback():
 
 
 @app.route("/settings/")
+@requires_authorization
 async def settings():
     user = await discord.fetch_user()
     return f"""
@@ -152,6 +155,24 @@ async def main(s_id):
         app_db.db.admin_profiles.update_one({'admin_id': discord.user_id}, {'$set': {'main_server': new_main[0]}})
 
     return redirect(url_for(".index"))
+
+
+@app.route("/ban/<int:s_id>/<int:u_id>")
+@requires_authorization
+async def ban(s_id, u_id):
+    print('BAN')
+
+
+@app.route("/kick/<int:s_id>/<int:u_id>")
+@requires_authorization
+async def kick(s_id, u_id):
+    print('KICK')
+
+
+@app.route("/warn/<int:u_id>")
+@requires_authorization
+async def warn(u_id):
+    print('WARN')
 
 
 @app.route("/logout/")
