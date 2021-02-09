@@ -10,6 +10,7 @@ from pymongo import MongoClient
 DOC GENERATION FUNCTIONS
 """
 
+
 def generate_exhibit(reported_message, report_id):
     """
     generates exhibit doc to add to db
@@ -83,22 +84,64 @@ def post_report_users_update(reporter_check, reported_check):
 
     return "" if not msg else "**whistlebot update!**\n" + msg
 
+
 class Database:
     """
     DATABASE CLASS
 
     holds database management methods
     """
+
     def __init__(self):
         self.status = ('active', 'banned', 'kicked', 'left')
         self.client = MongoClient(settings.CONNECTION_URL)
         self.db = self.client['whistlebot-db']
 
     """
+    DATABASE RETRIEVE METHODS
+    
+    simplify certain retrieval tasks
+    """
+
+    def get_servers(self, user_id):
+        """
+        generates list of servers that can be monitored by user
+        """
+        servers = self.db.servers.find({})
+        user_servers = []
+
+        for server in servers:
+            if int(user_id) in server['auth_users']: user_servers.append((server['server_id'], server['server_name']))
+
+        return user_servers
+
+    def get_main_server(self, user_id):
+        """
+        Given a user, returns server_id of main server of user with profile in db
+        """
+        admin = self.db.admin_profiles.find_one({'admin_id': int(user_id)})
+        return admin['main_server']
+
+    """
     DATABASE CREATE/ENSURE METHODS
 
     creates new objects in whistlebot database.
     """
+
+    def ensure_admin_profile(self, user):
+        """
+        Given a user, creates a new profile for a user authorized to access the interface for a
+        particular server.
+        """
+        if self.db.admin_profiles.find_one({'admin_id': int(user.id)}) is None:
+            servers = self.get_servers(user.id)
+            new_mod = {'admin_id': user.id,
+                       'username': user.name,
+                       'main_server': None if not servers else servers[0],
+                       'auth_servers': servers
+                       }
+
+            self.db.admin_profiles.insert_one(new_mod)
 
     def add_server(self, guild):
         """
@@ -167,7 +210,8 @@ class Database:
                 rpt_times = find_exhibit['times_reported'] + 1
                 reports = reports.append(int(report_id))
                 update_val = {'$set': {'times_reported': rpt_times, 'reports': reports}}
-                return True if self.db.exhibits.update_one({'reported_message_id': int(reported_message.id)}, update_val).modified_count == 1 else False
+                return True if self.db.exhibits.update_one({'reported_message_id': int(reported_message.id)},
+                                                           update_val).modified_count == 1 else False
 
             # flag to tell reporter not re-report a message, please -- this should help prevent spam
             else:
@@ -239,6 +283,11 @@ class Database:
             1 - report made against user
             -1 - report made by user
         """
+        # keep username and discriminator up to date
+        self.db.discordusers.update_one({'discord_id': int(user.id)},
+                                        {'$set': {'discord_name': user.username,
+                                                  'discriminator': user.discriminator}})
+
         # verify user has guild profile
         query = {'server_id': int(guild.id), 'user_id': int(user.id)}
         find_member = self.db.member_profiles.find_one(query)
@@ -251,10 +300,12 @@ class Database:
             if not self.db.member_profiles.insert_one(new_member).acknowledged: return False
 
             # since user exists, we need to update the user object with a query to the new profile
+            # this is where we also check for username updates
             get_user = self.db.discordusers.find_one({'discord_id': int(user.id)})
             get_user['profiles'].append(query)
 
-            update_user = self.db.discordusers.update_one({'discord_id': int(user.id)}, {"$set": {'profiles': get_user['profiles']}})
+            update_user = self.db.discordusers.update_one({'discord_id': int(user.id)},
+                                                          {"$set": {'profiles': get_user['profiles']}})
 
             return True if update_user.modified_count == 1 else False
 
@@ -269,7 +320,8 @@ class Database:
                 update_dict = {'reports_sent': find_member['reports_sent'] + 1}
 
             if report_status != 0:
-                return True if self.db.member_profiles.update_one(query, {"$set": update_dict}).modified_count == 1 else False
+                return True if self.db.member_profiles.update_one(query,
+                                                                  {"$set": update_dict}).modified_count == 1 else False
 
     def update_user_doc(self, user, member, guild, report_status=0):
         """
@@ -293,6 +345,8 @@ class Database:
         # create new user profile
         if get_user is None:
             new_user = {'discord_id': user.id,
+                        'discord_name': user.username,
+                        'discriminator': user.discriminator,
                         'profiles': [{'server_id': guild.id, 'user_id': user.id}],  # add query just for guild the
                         # request came from for now
                         'deleted': False,  # we have other ways to confirm this info

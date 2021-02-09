@@ -6,7 +6,7 @@ from settings import DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_
     OAUTHLIB_INSECURE_TRANSPORT, SECRET_KEY, MOTOR_URL
 
 # UI interface
-from quart import Quart, session, redirect, url_for
+from quart import Quart, session, redirect, url_for, render_template
 from database import Database
 # from quart_motor import Motor
 from quart_discord import DiscordOAuth2Session, requires_authorization
@@ -36,62 +36,17 @@ discord = DiscordOAuth2Session(app)
 
 # rest = hikari.RESTApp() # for when i can figure this out
 
-# MOVE TO DB CLASS
-def get_servers(user_id):
-    """
-    generates list of servers that can be monitored by user
-    """
-    servers = app_db.db.servers.find({})
-    user_servers = []
-
-    for server in servers:
-        if int(user_id) in server['auth_users']: user_servers.append((server['server_id'], server['server_name']))
-
-    return user_servers
-
-def get_main_server(user_id):
-    """
-    Given a user, returns server_id of main server of user with profile in db
-    """
-    admin = app_db.db.admin_profiles.find_one({'admin_id': int(user_id)})
-    return admin['main_server']
-
-
-def ensure_admin_profile(user):
-    """
-    Given a user, creates a new profile for a user authorized to access the interface for a
-    particular server.
-    """
-    if app_db.db.admin_profiles.find_one({'admin_id': int(user.id)}) is None:
-
-        servers = get_servers(user.id)
-        new_mod = {'admin_id': user.id,
-                   'username': user.name,
-                   'main_server': None if not servers else servers[0],
-                   'auth_servers': servers
-                   }
-
-        app_db.db.admin_profiles.insert_one(new_mod)
-
 # MODIFIED TEST CODE FROM QUART-DISCORD:
 # Original code from https://github.com/jnawk/Quart-Discord/blob/master/tests/test_app.py
 
 """
 FORMATTING (for now)
 """
+
 def datetime_from_utc_to_local(utc_datetime):
     now_timestamp = time.time()
     offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
     return utc_datetime + offset
-
-def server_html(servers):
-    server_objects = []
-
-    for server in servers:
-        string = f"""<li><b>{server[1]}</b> {HYPERLINK.format(url_for(".main", s_id=server[0]), "set as main server")}</li>"""
-        server_objects.append(string)
-
-    return server_objects
 
 def report_html(reports):
     report_objects = []
@@ -100,17 +55,19 @@ def report_html(reports):
 
         # get member info
         exhibit = app_db.db.exhibits.find_one({'reported_message_id': report['reported_message_id']})
+        reporter = app_db.db.member_profiles.find_one({'user_id': report['reporter_id']})
+        reported = app_db.db.member_profiles.find_one({'user_id': exhibit['reported_user_id']})
 
-        string = f"""<article>
-                        <h2>report #{report['report_id']}</h3>
-                        <h3>reported by user #{report['reporter_id']} on {datetime_from_utc_to_local(report['report_time'])}</h3>
-                        <h4>user #{exhibit['reported_user_id']} wrote:</h4>
-                        <p>"{exhibit['reported_message']}"</p>
-                        <h5><b>on {datetime_from_utc_to_local(exhibit['reported_timestamp'])}</b></h5>
-                     </article>"""
-        report_objects.append(string)
+        report_hash = {'report_id': report['report_id'],
+                       'reporter_id': report['reporter_id'],
+                       'report_time': datetime_from_utc_to_local(report['report_time']),
+                       'reported_user_id': exhibit['reported_user_id'],
+                       'reported_message': exhibit['reported_message'],
+                        'reported_timestamp': datetime_from_utc_to_local(exhibit['reported_timestamp'])
+                        }
+        report_objects.append(report_hash)
 
-    return "no reports here--all is well!" if not report_objects else " ".join(report_objects)
+    return "no reports here--all is well!" if not report_objects else report_objects
 
 
 @app.route("/")
@@ -123,39 +80,22 @@ async def index():
 
     # get user to check
     user = await discord.fetch_user()
-    ensure_admin_profile(user)
-    main_server = get_main_server(user.id)
+    app_db.ensure_admin_profile(user)
+    main_server = app_db.get_main_server(user.id)
     main_server_reports = list(app_db.db.reports.find({'server_id': int(main_server[0])}))
 
-    print(main_server_reports)
+    navlinks =HYPERLINK.format(url_for(".logout"), "logout") + HYPERLINK.format(url_for(".invite_bot"), "add whistlebot to new server")
 
     # WHERE DO I PUT THIS?
-    session['servers'] = get_servers(user.id)
+    session['servers'] = app_db.get_servers(user.id)
     session['main_server'] = main_server
 
-    return f"""
-    <html>
-        <head>whistlebot mission control</head>
-        <body>
-            <header>
-                <h1>welcome to whistlebot, {user.name}!</h1>
-                <nav>
-                    {HYPERLINK.format(url_for(".settings"), "settings")}<br />
-                    {HYPERLINK.format(url_for(".logout"), "logout")}<br />
-                    {HYPERLINK.format(url_for(".servers"), "servers")}<br />
-                    {HYPERLINK.format(url_for(".reports"), "reports")}<br />
-                    {HYPERLINK.format(url_for(".invite_bot"), "add whistlebot to new server")} <br />
-                </nav>
-            </header>
-            <main>
-                <h2><b>main server:</b> {get_main_server(user.id)[1]}</h2>
-                <h2><b>today's reports</b></h2>
-                <ul>{report_html(main_server_reports)}</ul>
-            </main>
-        </body>
-
-    </html>
-    """
+    return await render_template('index.html',
+                                 reports=report_html(main_server_reports),
+                                 main_server=main_server,
+                                 servers=session['servers'],
+                                 user=user,
+                                 nav=NAV_AUTH)
 
 
 @app.route("/login/")
@@ -200,31 +140,18 @@ async def settings():
 """
 
 
-@app.route("/servers")
-async def servers():
-    return "<br />".join(server_html(session['servers']))
-
-
 @app.route("/main/<int:s_id>")
 async def main(s_id):
     new_main = [v for i, v in enumerate(session['servers']) if v[0] == s_id]
     if not new_main:
         return f"""
                 <h1>404: server not found</h1>
-                {HYPERLINK.format(url_for(".servers"), "back to servers")}<br />
+                {HYPERLINK.format(url_for(".index"), "back to home")}<br />
                 """
     else:
         app_db.db.admin_profiles.update_one({'admin_id': discord.user_id}, {'$set': {'main_server': new_main[0]}})
 
     return redirect(url_for(".index"))
-
-
-@app.route("/reports")
-async def reports():
-    main_server = session['main_server']
-    main_server_reports = list(app_db.db.reports.find({'server_id': int(main_server[0])}))
-    return f"""<ul>{" ".join(report_html(main_server_reports))}</ul>"""
-
 
 
 @app.route("/logout/")
@@ -235,6 +162,9 @@ async def logout():
 
 
 HYPERLINK = '<a href="{}">{}</a>'
+
+NAV_AUTH = {'settings': 'settings', 'logout': 'logout', 'invite-bot': 'invite whistlebot to a new server'}
+NAV = {'login': 'login', 'invite-oauth': 'login and add bot to server'}
 
 if __name__ == "__main__":
     app.run(debug=True)

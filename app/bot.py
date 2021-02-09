@@ -90,11 +90,12 @@ async def check_exhibit_update(event):
         edited_message['reported_edits'].append((event.message.edited_timestamp, event.message.content))
         bot_db.db.exhibits.update_one(query, {'$set': {'reported_edits': edited_message['reported_edits']}})
 
-        # send message to author
-        await event.message.author.send('**whistlebot update:**\n'
-                                        'it has been brought to our attention that you have attempted to edit'
-                                        f'message {event.message.id}, which has been reported to our database.'
-                                        'the edits have been saved and will be viewable by server admins.')
+        # send message to author if too many edit attempts
+        if len(edited_message['reported_edits']) > 3:
+            await event.message.author.send('**whistlebot update:**\n'
+                                            'it has been brought to our attention that you have attempted to edit'
+                                            f'message {event.message.id} multiple times. please note that the'
+                                            'edits have been saved and will be viewable by server admins.')
 
 
 @bot.listen(hikari.GuildMessageDeleteEvent)
@@ -126,7 +127,7 @@ async def check_exhibit_delete(event):
 
         # send message to author
         await author.send('**whistlebot update:**\n'
-                          'it has been brought to our attention that you have attempted to edit\n'
+                          'it has been brought to our attention that you have attempted to delete\n'
                           f'messages: **{str_ids}**, currently reported to our database.\n'
                           'this action will be viewable by server admins.')
 
@@ -223,7 +224,7 @@ async def flag(ctx):
 
         # attempting to report a server owner
         elif msg_ref.author.id == owner.id:
-            msg = 'server owners currently cannot be reported via whistlebot.\n'
+            msg = 'reporting server owners is unfortunately outside of whistlebot capabilities due to discord limitations.\n'
             msg += 'if this is a serious issue that cannot be resolved with the moderators,\n'
             msg += 'we recommend reporting the owner per discord\'s instructions below:\n'
             msg += 'https://support.discord.com/hc/en-us/articles/360000291932-How-to-Properly-Report-Issues-to-Trust-Safety'

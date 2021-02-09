@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>whistlebot mission control</title>
+</head>
+    <body>
+        <header>
+            <h1>welcome to whistlebot, {{user.name}}!</h1>
+                <nav>
+                    {% for k, v in nav.items() %}
+                    <a href={{k}}>{{v}}</a>
+                    {% endfor %}
+                </nav>
+                <section>
+                    <h2><b>main server:</b> {{main_server[1]}}</h2>
+                    <h2><b>servers</b></h2>
+                    {% for server in servers %}
+                        <a href={{'main/' + server[0]|string}}>{{server[1]}}</a>
+                    {% endfor %}
+                </section>
+        </header>
+        <main>
+                <section>
+                    <h2><b>today's reports</b></h2>
+                    {% for report in reports%}
+                        <article>
+                            <h2>report #{{report['report_id']}}</h2>
+                            <h3>reported by user #{{report['reporter_id']}} on {{report['report_time']}}</h3>
+                            <h4>user #{{report['reported_user_id']}} wrote:</h4>
+                            <p>"{{report['reported_message']}}"</p>
+                            <h5><b>on {{report['reported_timestamp']}}</b></h5>
+                         </article>
+                    {% endfor %}
+                </section>
+                <section>
+                    <h2><b>users</b></h2>
+                </section>
+
+        </main>
+</body>
+</html>
