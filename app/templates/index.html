@@ -20,9 +20,6 @@
                     {% endfor %}
                 </section>
         </header>
-        {% for message in get_flashed_messages() %}
-            <div class="flash">{{ message }}</div>
-        {% endfor %}
         <main>
                 <section>
                     <h2><b>today's reports</b></h2>
@@ -33,10 +30,6 @@
                             <h4>user {{report['reported_name']}} wrote:</h4>
                             <p>"{{report['reported_message']}}"</p>
                             <h5><b>on {{report['reported_timestamp']}}</b></h5>
-                            <div>
-                                <h3>actions</h3>
-
-                            </div>
                          </article>
                     {% endfor %}
                 </section>
