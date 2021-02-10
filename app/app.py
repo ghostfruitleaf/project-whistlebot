@@ -277,7 +277,7 @@ async def logout():
 
 HYPERLINK = '<a href="{}">{}</a>'
 
-NAV_AUTH = {'settings': 'settings', 'logout': 'logout', 'invite-bot': 'invite whistlebot to a new server'}
+NAV_AUTH = {'logout': 'logout', 'invite-bot': 'invite whistlebot to a new server'}
 NAV = {'login': 'login', 'invite-oauth': 'login and add bot to server'}
 
 if __name__ == "__main__":
