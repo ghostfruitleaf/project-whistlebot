@@ -113,10 +113,7 @@ def member_html(members):
 @app.route("/")
 async def index():
     if not await discord.authorized:
-        return f"""
-         {HYPERLINK.format(url_for(".login"), "login")} <br />
-         {HYPERLINK.format(url_for(".invite_oauth"), "login and add bot to server")}
-         """
+        return await render_template('login.html', nav = NAV)
 
     # get user to check
     user = await discord.fetch_user()
