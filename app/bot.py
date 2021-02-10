@@ -253,7 +253,7 @@ async def flag(ctx):
             else:
                 await ctx.message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
                 msg = 'thank you for your report -- it is currently under review by the admin team.'
-                msg += f"\nif you wish to see status updates of your report, please type **!report_update {ctx.message.id}.** "
+                msg += f"\nif you wish to see status updates of your report, please type the following:\n**!report_update {ctx.message.id}** "
 
         # send msg
         await ctx.message.author.send("**whistlebot update!**\n" + msg)
@@ -314,7 +314,7 @@ async def report_update(ctx, report_id=0):
 
         guild = await bot.rest.fetch_guild(guild=report['server_id'])
         if not action['auth_user_id']:
-            msg = f'no action has been taken yet.\nplease contact mods at server **{guild.name}**ß if you think this is an urgent issue.'
+            msg = f'no action has been taken yet.\nplease contact mods at server **{guild.name}** if you think this is an urgent issue.'
         else:
             # user = await bot.rest.fetch_user(user=action['auth_user_id'])
             action_taken = action['action_taken']
