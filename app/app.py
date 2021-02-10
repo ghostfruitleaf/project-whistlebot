@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 
 from settings import DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI, DISCORD_BOT_TOKEN, PERMISSIONS, \
-    OAUTHLIB_INSECURE_TRANSPORT, SECRET_KEY, MOTOR_URL
+    OAUTHLIB_INSECURE_TRANSPORT, SECRET_KEY
 
 # UI interface
 from quart import Quart, session, redirect, url_for, render_template
@@ -164,6 +164,9 @@ async def settings():
     return await render_template('settings.html')
 
 
+""" START ACTIONS """
+
+
 @app.route("/main/<int:s_id>")
 async def main(s_id):
     new_main = [v for i, v in enumerate(session['servers']) if v[0] == s_id]
@@ -178,11 +181,28 @@ async def main(s_id):
     return redirect(url_for(".index"))
 
 
-@app.route("/ban/<int:s_id>/<int:u_id>")
+@app.route("/ban/<int:s_id>/<int:u_id>/<int:r_id>")
 @requires_authorization
-async def ban(s_id, u_id):
+async def ban(s_id, u_id, r_id=None):
+    user = await discord.fetch_user()
+
+    # ban
     data = await discord.bot_request(f'/v8/guilds/{s_id}/bans/{u_id}', method='PUT')
-    # print(data.get())
+
+    # update report if success
+    if (r_id is not None) and (not data):
+        action = {'$set': {'action': {'auth_user_id': user.id,
+                                      'timestamp': datetime.utcnow(),
+                                      'action_taken': 'banned'}
+                           }
+                  }
+        app_db.db.reports.update_one({'report_id': r_id}, action)
+
+    if not data:
+        query = {'server_id': s_id, 'user_id': u_id}
+        profile = app_db.db.member_profiles.find_one(query)
+        app_db.db.member_profiles.update_one(query, {'$set': {'server_status': 'banned',
+                                                              'notes': profile['notes'] + ' (ban)'}})
     return redirect(url_for(".index"))
 
 
@@ -205,7 +225,10 @@ async def kick(s_id, u_id, r_id=None):
 
     # update user if success
     if not data:
-        app_db.db.member_profiles.update_one({'server_id': s_id, 'user_id': u_id}, {'$set': {'server_status': 'kicked'}})
+        query = {'server_id': s_id, 'user_id': u_id}
+        profile = app_db.db.member_profiles.find_one(query)
+        app_db.db.member_profiles.update_one(query, {'$set': {'server_status': 'kicked',
+                                                              'notes': profile['notes'] + ' (kick)'}})
 
     #     report = next((report for report in session['main_server_reports'] if report['report_id'] == r_id), None)
     #     channel = await discord.bot_request('/v8/users/@me/channels/', method='GET')
@@ -227,6 +250,9 @@ async def kick(s_id, u_id, r_id=None):
     #     # await discord.bot_request(f'/v8/users/@me/channels', method='POST', data=data)
 
     return redirect(url_for(".index"))
+
+
+"""END ACTIONS"""
 
 
 @app.route("/logout/")
