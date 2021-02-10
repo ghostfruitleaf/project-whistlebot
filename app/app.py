@@ -47,7 +47,18 @@ def datetime_from_utc_to_local(utc_datetime):
     return utc_datetime + offset
 
 
+def active_reports(html_reports):
+    count = 0
+    for report in html_reports:
+        if not report['action_taken']:  # again, thanks jinja2
+            count += 1
+
+    return count
+
+
 def report_html(reports):
+    if isinstance(reports, str): return 0
+
     report_objects = []
 
     for report in reports:
@@ -64,14 +75,15 @@ def report_html(reports):
                        'reported_user_id': exhibit['reported_user_id'],
                        'reported_message': exhibit['reported_message'],
                        'reported_timestamp': datetime_from_utc_to_local(exhibit['reported_timestamp']),
-                       'action_taken': True if not report['action']['auth_user_id'] else False,
+                       'action_taken': False if report['action']['auth_user_id'] is None else True,
                        'ban_kick': f"{report['server_id']}/{exhibit['reported_user_id']}/{report['report_id']}"
                        }
         report_objects.append(report_hash)
 
-    return "no reports here--all is well!" if not report_objects else sorted(report_objects,
-                                                                             key=lambda x: x['reported_timestamp'],
-                                                                             reverse=True)
+    return "no active reports here--all is well!" if not report_objects else sorted(report_objects,
+                                                                                    key=lambda x: x[
+                                                                                        'reported_timestamp'],
+                                                                                    reverse=True)
 
 
 def member_html(members):
@@ -89,6 +101,7 @@ def member_html(members):
                        'status': member['server_status'],
                        'reports_sent': member['reports_sent'],
                        'reports_received': member['reports_received'],
+                       'notes': member['notes'],
                        'ban_kick': f"{member['server_id']}/{member['user_id']}"
                        }
 
@@ -122,13 +135,16 @@ async def index():
     session['main_server_reports'] = report_html(main_server_reports)
     session['main_server_members'] = member_html(server_members)
 
+    active_r = active_reports(session['main_server_reports'])
+
     return await render_template('index.html',
                                  reports=report_html(main_server_reports),
                                  main_server=main_server,
                                  servers=session['servers'],
                                  user=user,
                                  members=member_html(server_members),
-                                 nav=NAV_AUTH)
+                                 nav=NAV_AUTH,
+                                 active=active_r)
 
 
 @app.route("/login/")
@@ -160,11 +176,24 @@ async def callback():
 @app.route("/settings/")
 @requires_authorization
 async def settings():
-    user = await discord.fetch_user()
+    server_info = app_db.db.servers.find_one({'server_id': session['main_server'][0]})
+    print(server_info)
     return await render_template('settings.html')
 
 
 """ START ACTIONS """
+
+
+@app.route("/ignore/<int:r_id>")
+async def ignore(r_id):
+    action = {'$set': {'action': {'auth_user_id': discord.user_id,
+                                  'timestamp': datetime.utcnow(),
+                                  'action_taken': "ignore"}
+                       }
+              }
+    app_db.db.reports.update_one({'report_id': r_id}, action)
+
+    return redirect(url_for(".index"))
 
 
 @app.route("/main/<int:s_id>")
@@ -184,14 +213,12 @@ async def main(s_id):
 @app.route("/ban/<int:s_id>/<int:u_id>/<int:r_id>")
 @requires_authorization
 async def ban(s_id, u_id, r_id=None):
-    user = await discord.fetch_user()
-
     # ban
     data = await discord.bot_request(f'/v8/guilds/{s_id}/bans/{u_id}', method='PUT')
 
     # update report if success
     if (r_id is not None) and (not data):
-        action = {'$set': {'action': {'auth_user_id': user.id,
+        action = {'$set': {'action': {'auth_user_id': discord.user_id,
                                       'timestamp': datetime.utcnow(),
                                       'action_taken': 'banned'}
                            }
@@ -209,14 +236,12 @@ async def ban(s_id, u_id, r_id=None):
 @app.route("/kick/<int:s_id>/<int:u_id>/<int:r_id>")
 @requires_authorization
 async def kick(s_id, u_id, r_id=None):
-    user = await discord.fetch_user()  # get auth_user
-
     # kick
     data = await discord.bot_request(f'/v8/guilds/{s_id}/members/{u_id}', method='DELETE')
 
     # update report if success
     if (r_id is not None) and (not data):
-        action = {'$set': {'action': {'auth_user_id': user.id,
+        action = {'$set': {'action': {'auth_user_id': discord.user_id,
                                       'timestamp': datetime.utcnow(),
                                       'action_taken': 'kicked'}
                            }

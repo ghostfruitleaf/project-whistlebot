@@ -25,6 +25,7 @@
                     <h2><b>today's reports</b></h2>
                     {% if reports is not string %}
                         {% for report in reports%}
+                            {% if report['action_taken'] == False %}
                             <article>
                                 <h2>report #{{report['report_id']}}</h2>
                                 <h3>reported by {{report['reporter_name']}} on {{report['report_time']}}</h3>
@@ -37,7 +38,11 @@
                                     <a href={{'/kick/'+report['ban_kick']}}>kick</a>
                                 </div>
                              </article>
+                            {% endif %}
                         {% endfor %}
+                        {% if active == 0 %}
+                    <p>all active reports viewed! please see <b>/reports</b> for report history.</p>
+                        {% endif %}
                     {% else %}
                     <p>{{reports}}</p>
                     {% endif %}
