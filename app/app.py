@@ -6,7 +6,7 @@ from settings import DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_
     OAUTHLIB_INSECURE_TRANSPORT, SECRET_KEY, MOTOR_URL
 
 # UI interface
-from quart import Quart, session, redirect, url_for, render_template
+from quart import Quart, session, redirect, url_for, render_template, flash
 from database import Database
 # from quart_motor import Motor
 from quart_discord import DiscordOAuth2Session, requires_authorization
@@ -91,9 +91,9 @@ async def index():
     # WHERE DO I PUT THIS?
     session['servers'] = app_db.get_servers(user.id)
     session['main_server'] = main_server
-
+    session['main_server_reports'] = report_html(main_server_reports)
     return await render_template('index.html',
-                                 reports=report_html(main_server_reports),
+                                 reports=session['main_server_reports'],
                                  main_server=main_server,
                                  servers=session['servers'],
                                  user=user,
@@ -123,7 +123,14 @@ async def callback():
     # prepare redirect
     data = await discord.callback()
     redirect_to = data.get("redirect", "/")
+    await flash('logged in!')
     return redirect(redirect_to)
+
+
+@app.route("/reports/")
+@requires_authorization
+async def reports():
+    return f"""<h1>{session['main_server_reports']}</h1>"""
 
 
 @app.route("/settings/")
@@ -173,6 +180,12 @@ async def kick(s_id, u_id):
 @requires_authorization
 async def warn(u_id):
     print('WARN')
+
+
+@app.route("/ignore/<int:r_id>")
+@requires_authorization
+async def ignore(r_id):
+    print("IGNORE")
 
 
 @app.route("/logout/")
