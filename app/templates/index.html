@@ -23,18 +23,48 @@
         <main>
                 <section>
                     <h2><b>today's reports</b></h2>
-                    {% for report in reports%}
-                        <article>
-                            <h2>report #{{report['report_id']}}</h2>
-                            <h3>reported by {{report['reporter_name']}} on {{report['report_time']}}</h3>
-                            <h4>user {{report['reported_name']}} wrote:</h4>
-                            <p>"{{report['reported_message']}}"</p>
-                            <h5><b>on {{report['reported_timestamp']}}</b></h5>
-                         </article>
-                    {% endfor %}
+                    {% if reports is not string %}
+                        {% for report in reports%}
+                            <article>
+                                <h2>report #{{report['report_id']}}</h2>
+                                <h3>reported by {{report['reporter_name']}} on {{report['report_time']}}</h3>
+                                <h4>user {{report['reported_name']}} wrote:</h4>
+                                <p>"{{report['reported_message']}}"</p>
+                                <h5><b>on {{report['reported_timestamp']}}</b></h5>
+                                <div>
+                                    <h3>actions</h3>
+                                    <a href={{'/ban/'+report['ban_kick']}}>ban</a>
+                                    <a href={{'/kick/'+report['ban_kick']}}>kick</a>
+                                </div>
+                             </article>
+                        {% endfor %}
+                    {% else %}
+                    <p>{{reports}}</p>
+                    {% endif %}
                 </section>
                 <section>
-                    <h2><b>users</b></h2>
+                    <h2><b>members</b></h2>
+                    {% if members is not string %}
+                        {% for member in members%}
+                            <article>
+                                <h2><b><span>{{member['username']}}</span></b> id #{{member['discord_id']}}</h2>
+                                <h3><b>current nickname</b>: {{member['current_nickname']}}</h3>
+                                <h4><b>joined:</b> {{member['joined_on']}}</h4>
+                                <h4><b>status:</b> {{member['status']}}</h4>
+                                <h4><b>reports sent:</b> {{member['reports_sent']}}</h4>
+                                <h4><b>reports received:</b> {{member['reports_received']}}</h4>
+                                <h5><b>nickname history:</b> {{member['nickname_history']}}</h5>
+                                <h5><b>notes:</b> {{member['notes']}}</h5>
+                                <div>
+                                    <h3>actions</h3>
+                                    <a href={{'/ban/'+member['ban_kick']}}>ban</a>
+                                    <a href={{'/kick/'+member['ban_kick']}}>kick</a>
+                                </div>
+                             </article>
+                        {% endfor %}
+                    {% else %}
+                    <p>{{members}}</p>
+                    {% endif %}
                 </section>
 
         </main>

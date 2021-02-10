@@ -162,7 +162,8 @@ async def mark_member_left(event):
     get_member_profile = bot_db.db.member_profiles.find_one(query)
 
     if get_member_profile is not None:
-        new_data = {'$set': {'server_status': 'left', 'notes': get_member_profile['notes'] +
+        status = 'left'
+        new_data = {'$set': {'server_status': status, 'notes': get_member_profile['notes'] +
                                                                f'NOTE: left {datetime.now(timezone.utc)}'}}
         bot_db.db.member_profiles.update_one(query, new_data)
 

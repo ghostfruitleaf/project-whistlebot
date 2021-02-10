@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 import time
 
@@ -33,26 +34,23 @@ app_db = Database()
 # set up discord API connection
 discord = DiscordOAuth2Session(app)
 
-
 # rest = hikari.RESTApp() # for when i can figure this out
-
-# MODIFIED TEST CODE FROM QUART-DISCORD:
-# Original code from https://github.com/jnawk/Quart-Discord/blob/master/tests/test_app.py
 
 """
 FORMATTING (for now)
 """
+
 
 def datetime_from_utc_to_local(utc_datetime):
     now_timestamp = time.time()
     offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
     return utc_datetime + offset
 
+
 def report_html(reports):
     report_objects = []
 
     for report in reports:
-
         # get member info
         exhibit = app_db.db.exhibits.find_one({'reported_message_id': report['reported_message_id']})
         reporter = app_db.db.discordusers.find_one({'discord_id': report['reporter_id']})
@@ -65,11 +63,38 @@ def report_html(reports):
                        'reported_name': reported['discord_name'] + '#' + reported['discriminator'],
                        'reported_user_id': exhibit['reported_user_id'],
                        'reported_message': exhibit['reported_message'],
-                        'reported_timestamp': datetime_from_utc_to_local(exhibit['reported_timestamp'])
-                        }
+                       'reported_timestamp': datetime_from_utc_to_local(exhibit['reported_timestamp']),
+                       'action_taken': True if not report['action']['auth_user_id'] else False,
+                       'ban_kick': f"{report['server_id']}/{exhibit['reported_user_id']}/{report['report_id']}"
+                       }
         report_objects.append(report_hash)
 
-    return "no reports here--all is well!" if not report_objects else report_objects
+    return "no reports here--all is well!" if not report_objects else sorted(report_objects,
+                                                                             key=lambda x: x['reported_timestamp'],
+                                                                             reverse=True)
+
+
+def member_html(members):
+    member_objects = []
+
+    for member in members:
+        # get user info
+        user = app_db.db.discordusers.find_one({'discord_id': member['user_id']})
+
+        member_hash = {'discord_id': member['user_id'],
+                       'username': user['discord_name'] + '#' + user['discriminator'],
+                       'current_nickname': 'none' if not member['nicknames'] else member['nicknames'][-1],
+                       'nickname_history': 'none' if not member['nicknames'] else ', '.join(member['nicknames']),
+                       'joined_on': datetime_from_utc_to_local(member['joined_at']),
+                       'status': member['server_status'],
+                       'reports_sent': member['reports_sent'],
+                       'reports_received': member['reports_received'],
+                       'ban_kick': f"{member['server_id']}/{member['user_id']}"
+                       }
+
+        member_objects.append(member_hash)
+
+    return "no troublemakers here--all is well!" if not member_objects else member_objects
 
 
 @app.route("/")
@@ -83,20 +108,26 @@ async def index():
     # get user to check
     user = await discord.fetch_user()
     app_db.ensure_admin_profile(user)
+
+    # get main server
     main_server = app_db.get_main_server(user.id)
     main_server_reports = list(app_db.db.reports.find({'server_id': int(main_server[0])}))
 
-    navlinks =HYPERLINK.format(url_for(".logout"), "logout") + HYPERLINK.format(url_for(".invite_bot"), "add whistlebot to new server")
+    # get users in main server
+    server_members = list(app_db.db.member_profiles.find({'server_id': int(main_server[0])}))
 
     # WHERE DO I PUT THIS?
     session['servers'] = app_db.get_servers(user.id)
     session['main_server'] = main_server
+    session['main_server_reports'] = report_html(main_server_reports)
+    session['main_server_members'] = member_html(server_members)
 
     return await render_template('index.html',
                                  reports=report_html(main_server_reports),
                                  main_server=main_server,
                                  servers=session['servers'],
                                  user=user,
+                                 members=member_html(server_members),
                                  nav=NAV_AUTH)
 
 
@@ -130,17 +161,7 @@ async def callback():
 @requires_authorization
 async def settings():
     user = await discord.fetch_user()
-    return f"""
-<html>
-<head>
-<title>{user.name}</title>
-</head>
-<body><img src='{user.avatar_url or user.default_avatar_url}' />
-<p>Is avatar animated: {str(user.is_avatar_animated)}</p>
-<br />
-</body>
-</html>
-"""
+    return await render_template('settings.html')
 
 
 @app.route("/main/<int:s_id>")
@@ -160,19 +181,52 @@ async def main(s_id):
 @app.route("/ban/<int:s_id>/<int:u_id>")
 @requires_authorization
 async def ban(s_id, u_id):
-    print('BAN')
+    data = await discord.bot_request(f'/v8/guilds/{s_id}/bans/{u_id}', method='PUT')
+    # print(data.get())
+    return redirect(url_for(".index"))
 
 
-@app.route("/kick/<int:s_id>/<int:u_id>")
+@app.route("/kick/<int:s_id>/<int:u_id>/<int:r_id>")
 @requires_authorization
-async def kick(s_id, u_id):
-    print('KICK')
+async def kick(s_id, u_id, r_id=None):
+    user = await discord.fetch_user()  # get auth_user
 
+    # kick
+    data = await discord.bot_request(f'/v8/guilds/{s_id}/members/{u_id}', method='DELETE')
 
-@app.route("/warn/<int:u_id>")
-@requires_authorization
-async def warn(u_id):
-    print('WARN')
+    # update report if success
+    if (r_id is not None) and (not data):
+        action = {'$set': {'action': {'auth_user_id': user.id,
+                                      'timestamp': datetime.utcnow(),
+                                      'action_taken': 'kicked'}
+                           }
+                  }
+        app_db.db.reports.update_one({'report_id': r_id}, action)
+
+    # update user if success
+    if not data:
+        app_db.db.member_profiles.update_one({'server_id': s_id, 'user_id': u_id}, {'$set': {'server_status': 'kicked'}})
+
+    #     report = next((report for report in session['main_server_reports'] if report['report_id'] == r_id), None)
+    #     channel = await discord.bot_request('/v8/users/@me/channels/', method='GET')
+    #
+    #     print(channel)
+    #     msg = f'**whistlebot update!**\nyou have been kicked in response to the following report:'
+    #     embed = {'title': 'whistlebot report',
+    #              'description': 'user was kicked for the below message:',
+    #              'fields': [{'name':'contents',
+    #                          'value': report['reported_message'],
+    #                          'inline': True},
+    #                         {'name':'message id',
+    #                          'value': report['report_id'],
+    #                          'inline': True}]
+    #              }
+    #
+    #     data = {'content': msg,
+    #             'embed': embed}
+    #     # await discord.bot_request(f'/v8/users/@me/channels', method='POST', data=data)
+
+    return redirect(url_for(".index"))
 
 
 @app.route("/logout/")
