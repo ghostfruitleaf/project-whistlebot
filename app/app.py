@@ -92,6 +92,7 @@ def member_html(members):
     for member in members:
         # get user info
         user = app_db.db.discordusers.find_one({'discord_id': member['user_id']})
+        stats = app_db.get_actioned_reports(user, member['server_id'])
 
         member_hash = {'discord_id': member['user_id'],
                        'username': user['discord_name'] + '#' + user['discriminator'],
@@ -101,6 +102,9 @@ def member_html(members):
                        'status': member['server_status'],
                        'reports_sent': member['reports_sent'],
                        'reports_received': member['reports_received'],
+                       'report_stats': stats,
+                       'user_agrmt_toggle': 'turn on' if (member['user_argmt_status'] is not None) and
+                                                         not member['user_argmt_status'] else 'revoke',
                        'notes': member['notes'],
                        'ban_kick': f"{member['server_id']}/{member['user_id']}"
                        }
@@ -173,15 +177,21 @@ async def callback():
     return redirect(redirect_to)
 
 
-@app.route("/settings/")
-@requires_authorization
-async def settings():
-    server_info = app_db.db.servers.find_one({'server_id': session['main_server'][0]})
-    print(server_info)
-    return await render_template('settings.html')
-
-
 """ START ACTIONS """
+@app.route("/toggle/<int:u_id>")
+@requires_authorization
+async def toggle_flag_permissions(u_id):
+    query = {'server_id': session['main_server'][0], 'user_id': u_id}
+    member_profile = app_db.db.member_profiles.find_one(query)
+    if u_id != discord.user_id:
+        if member_profile['user_argmt_status'] is None:
+            app_db.db.member_profiles.update_one(query, {'$set':{'user_argmt_status': False}})
+
+        else:
+            app_db.db.member_profiles.update_one(query, {'$set': {'user_argmt_status':
+                                                                      not member_profile['user_argmt_status']}})
+    return redirect(url_for(".index"))
+
 
 
 @app.route("/ignore/<int:r_id>")
@@ -254,26 +264,8 @@ async def kick(s_id, u_id, r_id=None):
         profile = app_db.db.member_profiles.find_one(query)
         app_db.db.member_profiles.update_one(query, {'$set': {'server_status': 'kicked',
                                                               'notes': profile['notes'] + ' (kick)'}})
-
-    #     report = next((report for report in session['main_server_reports'] if report['report_id'] == r_id), None)
-    #     channel = await discord.bot_request('/v8/users/@me/channels/', method='GET')
-    #
-    #     print(channel)
-    #     msg = f'**whistlebot update!**\nyou have been kicked in response to the following report:'
-    #     embed = {'title': 'whistlebot report',
-    #              'description': 'user was kicked for the below message:',
-    #              'fields': [{'name':'contents',
-    #                          'value': report['reported_message'],
-    #                          'inline': True},
-    #                         {'name':'message id',
-    #                          'value': report['report_id'],
-    #                          'inline': True}]
-    #              }
-    #
-    #     data = {'content': msg,
-    #             'embed': embed}
-    #     # await discord.bot_request(f'/v8/users/@me/channels', method='POST', data=data)
-
+    # future update - attach report contents/id to action hash upon kick/ban, bot will handle
+    # sending message
     return redirect(url_for(".index"))
 
 

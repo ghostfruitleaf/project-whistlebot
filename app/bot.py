@@ -217,11 +217,19 @@ async def flag(ctx):
         guild = await bot.rest.fetch_guild(guild=ctx.message.guild_id)
         owner = await bot.rest.fetch_user(user=guild.owner_id)
 
-        # when/if implemented, flag authorization check
+        # authorization check
+        member_profile = bot_db.db.member_profiles.find_one({'server_id': int(ctx.message.guild_id),
+                                                            'user_id': int(ctx.message.author.id)})
+
+        can_flag = member_profile['user_argmt_status']
+
+
+        if (not can_flag) and (can_flag is not None):
+             msg = 'your ability to use the report feature has been revoked.\nplease contact mods if you believe this was in error.'
 
         # don't report the bot
-        if msg_ref.author.id == int(settings.DISCORD_CLIENT_ID):  # do we need to check for an attempt to report a bot?
-            msg = 'do not attempt to report whistlebot.'
+        elif msg_ref.author.id == int(settings.DISCORD_CLIENT_ID):  # do we need to check for an attempt to report a bot?
+            msg = 'do not attempt to report whistlebot. no report has been sent.'
 
         # attempting to report a server owner
         elif msg_ref.author.id == owner.id:
@@ -229,10 +237,10 @@ async def flag(ctx):
             msg += 'if this is a serious issue that cannot be resolved with the moderators,\n'
             msg += 'we recommend reporting the owner per discord\'s instructions below:\n'
             msg += 'https://support.discord.com/hc/en-us/articles/360000291932-How-to-Properly-Report-Issues-to-Trust-Safety'
-
+            msg += '\n no report has been sent.'
         # trying to self-report or report a system user.
         elif ctx.message.author.id == msg_ref.author.id:
-            msg = 'please do not attempt to abuse whistlebot functionality.'
+            msg = 'please do not attempt to use whistlebot functionality to spam. no report has been sent.'
 
         else:
             # below should only trigger if report is created
@@ -265,17 +273,17 @@ async def flag(ctx):
 
 
 # view status in server according to whistlebot
-@bot.command()
-async def member_status(ctx, mode=None):
-    """
-    DMs user with full report of their activity on whistlebot.
-    """
-    """
-    default without arg will prompt for user to type !status reporter or !status reports
-    - reporter shows # reports/server, and # reports that resulted in an action
-    - reports shows # times a user was reported/server, and # of each type of action taken against them/server
-    """
-    await ctx.message.author.send('this is a work in progress for a potential second sprint.')
+# @bot.command()
+# async def member_status(ctx, mode=None):
+#     """
+#     DMs user with full report of their activity on whistlebot.
+#     """
+#     """
+#     default without arg will prompt for user to type !status reporter or !status reports
+#     - reporter shows # reports/server, and # reports that resulted in an action
+#     - reports shows # times a user was reported/server, and # of each type of action taken against them/server
+#     """
+#     await ctx.message.author.send('this is a work in progress for a potential second sprint.')
 
 
 @bot.command()
@@ -297,8 +305,24 @@ async def report_update(ctx, report_id=0):
         - if action taken, lists action taken but NOT by whom (to prevent retaliation)
         - encourages mediation with mods of server
     """
+    report = bot_db.db.reports.find_one({'report_id': int(report_id)})
+    msg = ''
+    if report is None:
+        msg = 'please enter a valid report id.'
+    elif report['reporter_id'] == int(ctx.message.author.id):
+        action = report['action']
 
-    await ctx.message.author.send('this is a work in progress for a potential second sprint.')
+        guild = await bot.rest.fetch_guild(guild=report['server_id'])
+        if not action['auth_user_id']:
+            msg = f'no action has been taken yet.\nplease contact mods at server **{guild.name}**ß if you think this is an urgent issue.'
+        else:
+            # user = await bot.rest.fetch_user(user=action['auth_user_id'])
+            action_taken = action['action_taken']
+            time = str(action['timestamp'])
+            auth_user = action['auth_user_id']
+            msg = f'<@{auth_user}> performed the following:\n**{action_taken}**\non {time} UTC based on your report.'
+            msg += f'\nif you disagree with this decision, please discuss this with the moderation team at server: \n**{guild.name}**'
+    await ctx.message.author.send('**whistlebot update!**\n' + msg)
 
 
 # help function customized, time permitting

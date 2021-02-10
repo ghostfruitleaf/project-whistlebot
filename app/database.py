@@ -122,6 +122,31 @@ class Database:
         admin = self.db.admin_profiles.find_one({'admin_id': int(user_id)})
         return admin['main_server']
 
+
+    def get_actioned_reports(self, user, server_id):
+        reports_made = self.db.reports.find({'server_id': server_id, 'reporter_id': user['discord_id']})
+        messages_reported = self.db.exhibits.find({'reported_user_id': user['discord_id']})
+
+        reports_received = [self.db.reports.find_one({'reported_message_id':
+                                                          msg['reported_message_id'],
+                                                      'server_id':
+                                                          server_id}) for msg in messages_reported]
+        rm_count = 0
+        if reports_made:
+            for report in reports_made:
+                    action = report['action']['action_taken']
+                    if action and action != 'ignore':
+                        rm_count += 1
+
+        rr_count = 0
+        for report in reports_received:
+            if report is not None:
+                action = report['action']['action_taken']
+                if action and action != 'ignore':
+                    rr_count += 1
+
+        return (rm_count, rr_count)
+
     """
     DATABASE CREATE/ENSURE METHODS
 
