@@ -1,12 +1,9 @@
 # quart
 quart >= 0.14.1
-Quart-Motor >= 2.4.4
 Quart-Discord >= 2.1.4
-Quart-CORS >= 0.3.0
 
 # mongodb
 pymongo >= 3.11.2
-motor >= 2.3.0
 
 # python tools
 pytest >= 6.2.2

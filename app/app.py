@@ -1,5 +1,4 @@
 import os
-import json
 from datetime import datetime
 import time
 
@@ -9,7 +8,6 @@ from settings import DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_
 # UI interface
 from quart import Quart, session, redirect, url_for, render_template
 from database import Database
-# from quart_motor import Motor
 from quart_discord import DiscordOAuth2Session, requires_authorization
 
 # in case the switch is happening
@@ -27,8 +25,6 @@ app.config["DISCORD_REDIRECT_URI"] = DISCORD_REDIRECT_URI  # add this to discord
 app.config["DISCORD_BOT_TOKEN"] = DISCORD_BOT_TOKEN
 
 # database config
-# app.config["MONGO_URI"] = MOTOR_URL
-# mongo = Motor(app)
 app_db = Database()
 
 # set up discord API connection
