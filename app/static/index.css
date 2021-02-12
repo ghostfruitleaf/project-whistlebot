@@ -1,0 +1,106 @@
+body {
+  font-family: 'Comfortaa', cursive;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+}
+
+header, section.server-nav {
+  margin: auto;
+  padding: 20px;
+}
+
+span {
+  color: black;
+}
+
+header {
+  background: #9CEAEF;
+}
+
+a.servers {
+  background: #005856;
+}
+
+div > a.alert {
+  background: red;
+}
+
+section.server-nav {
+  background: #C4FFF9;
+  color: #003f3d;
+}
+
+
+h1 {
+    font-size: 6vw;
+    padding: 10px;
+}
+
+h2 {
+  font-size: 4vw;
+}
+
+a{
+  font-size: 2vw;
+  color: white;
+  text-decoration: none;
+  padding: 10px;
+  margin: auto;
+  white-space: nowrap;
+}
+
+a:link {
+  background-color: #07BEB8;
+}
+
+a:hover {
+  background-color: #00201d;
+}
+
+a:active {
+  background-color: #9CEAEF;
+}
+
+main{
+  display: flex;
+  justify-content: center;
+}
+
+main > section {
+  margin: 5px;
+  background-color: #e3f8f6;
+  padding: 10px;
+}
+
+.actions {
+  background-color: #9CEAEF;
+  align-items: center;
+  padding: 10px;
+}
+
+section.member{
+  background-color: #e8fffd;
+  display: grid;
+  grid-auto-flow: row;
+  grid-row-gap: 10px;
+
+}
+
+article.member {
+  background-color: white;
+  border: #b2f3f2 solid 2px;
+  color: #07BEB8;
+}
+
+span.field{
+  color: #07BEB8;
+}
+
+.member > h3,  .member > h4, .member > h5 {
+  color: #005856;
+}
+
+.report{
+
+}

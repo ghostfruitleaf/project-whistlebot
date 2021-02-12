@@ -44,16 +44,20 @@ def datetime_from_utc_to_local(utc_datetime):
 
 
 def active_reports(html_reports):
+
+    if isinstance(html_reports, str): return 0
+
     count = 0
-    for report in html_reports:
-        if not report['action_taken']:  # again, thanks jinja2
-            count += 1
+
+    if html_reports:
+        for report in html_reports:
+            if not report['action_taken']:  # again, thanks jinja2
+                count += 1
 
     return count
 
 
 def report_html(reports):
-    if isinstance(reports, str): return 0
 
     report_objects = []
 
@@ -62,7 +66,6 @@ def report_html(reports):
         exhibit = app_db.db.exhibits.find_one({'reported_message_id': report['reported_message_id']})
         reporter = app_db.db.discordusers.find_one({'discord_id': report['reporter_id']})
         reported = app_db.db.discordusers.find_one({'discord_id': exhibit['reported_user_id']})
-
         report_hash = {'report_id': report['report_id'],
                        'reporter_id': report['reporter_id'],
                        'reporter_name': reporter['discord_name'] + '#' + reporter['discriminator'],

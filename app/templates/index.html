@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>whistlebot mission control</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600&display=swap" rel="stylesheet">
+
 </head>
     <body>
         <header>
@@ -12,33 +16,32 @@
                     <a href={{k}}>{{v}}</a>
                     {% endfor %}
                 </nav>
-                <section>
-                    <h2><b>main server:</b> {{main_server[1]}}</h2>
-                    <h2><b>servers</b></h2>
-                    {% for server in servers %}
-                        <a href={{'main/' + server[0]|string}}>{{server[1]}}</a>
-                    {% endfor %}
-                </section>
         </header>
+        <section class = "server-nav">
+            <h2><span>current server:</span> {{main_server[1]}}</h2>
+            {% for server in servers %}
+                <a class='servers' href={{'main/' + server[0]|string}}>{{server[1]}}</a>
+            {% endfor %}
+        </section>
         <main>
-                <section>
+                <section class= 'report'>
                     <h2><b>today's reports</b></h2>
                     {% if reports is not string %}
                         {% for report in reports%}
                             {% if report['action_taken'] == False %}
-                            <article>
+                            <article class = 'report'>
                                 <h2>report #{{report['report_id']}}</h2>
                                 <h3>reported by {{report['reporter_name']}} on {{report['report_time']}}</h3>
                                 <h4>user {{report['reported_name']}} wrote:</h4>
                                 <p>"{{report['reported_message']}}"</p>
                                 <h5><b>on {{report['reported_timestamp']}}</b></h5>
-                                <div>
+                                <div class = 'actions'>
                                     <h3>actions</h3>
-                                    <a href={{'/ban/'+report['ban_kick']}}>ban</a>
+                                    <a class= 'alert' href={{'/ban/'+report['ban_kick']}}>ban</a>
                                     <a href={{'/kick/'+report['ban_kick']}}>kick</a>
                                     <a href={{'/ignore/'+report['report_id']|string}}>ignore</a>
                                 </div>
-                             </article>
+                            </article>
                             {% endif %}
                         {% endfor %}
                         {% if active == 0 %}
@@ -48,26 +51,26 @@
                     <p>{{reports}}</p>
                     {% endif %}
                 </section>
-                <section>
+                <section class = 'member'>
                     <h2><b>members</b></h2>
                     {% if members is not string %}
                         {% for member in members%}
-                            <article>
-                                <h2><b><span>{{member['username']}}</span></b> id #{{member['discord_id']}}</h2>
-                                <h3><b>current nickname</b>: {{member['current_nickname']}}</h3>
-                                <h4><b>joined:</b> {{member['joined_on']}}</h4>
-                                <h4><b>status:</b> {{member['status']}}</h4>
-                                <h4><b>reports sent:</b> {{member['reports_sent']}} ({{member['report_stats'][0]}} with action taken) </h4>
-                                <h4><b>reports received:</b> {{member['reports_received']}} ({{member['report_stats'][1]}} with action taken)</h4>
-                                <h5><b>nickname history:</b> {{member['nickname_history']}}</h5>
-                                <h5><b>notes:</b> {{member['notes']}}</h5>
-                                <div>
-                                    <h3>actions</h3>
-                                    <a href={{'/ban/'+member['ban_kick']}}>ban</a>
+                            <article class ='member'>
+                                <h3>{{member['username']}}</h3>
+                                <h3> <span class = 'field'>aka</span> {{member['current_nickname']}}</h3>
+                                <h4><span class = 'field'>joined:</span> {{member['joined_on']}}</h4>
+                                <h4><span class = 'field'>status:</span> {{member['status']}}</h4>
+                                <h4><span class = 'field'>reports sent:</span> {{member['reports_sent']}} ({{member['report_stats'][0]}} with action taken) </h4>
+                                <h4><span class = 'field'>reports received:</span> {{member['reports_received']}} ({{member['report_stats'][1]}} with action taken)</h4>
+                                <h5><span class = 'field'>nickname history:</span> {{member['nickname_history']}}</h5>
+                                <h5><span class = 'field'>notes:</span> {{member['notes']}}</h5>
+                                <div class = 'actions'>
+                                    <h3><span>actions</span></h3>
+                                    <a class= 'alert' href={{'/ban/'+member['ban_kick']}}>ban</a>
                                     <a href={{'/kick/'+member['ban_kick']}}>kick</a>
-                                    <a href={{'/toggle/'+member['discord_id']|string}}> {{member['user_agrmt_toggle']}} <b>!flag</b> permissions</a>
+                                    <a href={{'/toggle/'+member['discord_id']|string}}> {{member['user_agrmt_toggle']}} <b>!flag</b></a>
                                 </div>
-                             </article>
+                            </article>
                         {% endfor %}
                     {% else %}
                     <p>{{members}}</p>
