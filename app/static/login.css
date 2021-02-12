@@ -1,52 +1,53 @@
-/* Design based on Blue Login Field of Kevin Sleger https://codepen.io/MurmeltierS/pen/macKb */
-
-body {
-  background: #9ceaef;
-  font-family: "Roboto";
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  &::before {
-    z-index: -1;
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    background: #9ceaef;
-    /* IE Fallback */
-    background: #9ceaef;
-    width: 100%;
-    height: 100%;
-  }
+main {
+  top: 50%;
+  position: relative;
+  font-family: 'Comfortaa', cursive;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.section {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+section {
+  padding: 20px;
+}
+
+section.login-box {
+  text-align: center;
   background: #fff;
-  width: 285px;
-  margin: -140px 0 0 -182px;
-  padding: 40px;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
-  h2 {
-    margin: 0 0 20px;
-    line-height: 1;
-    color: #44c4e7;
-    font-size: 18px;
-    font-weight: 400;
-  }
-  a {
-    cursor: pointer;
-    background: #44c4e7;
-    width: 100%;
-    padding: 10px 15px;
-    border: 0;
-    color: #fff;
-    font-family: "Roboto";
-    font-size: 14px;
-    font-weight: 400;
-    &:hover {
-      background: #369cb8;
-    }
-  }
+  margin: auto;
+}
+
+div.header {
+    background: #68D8D6;
+    padding: 5px;
+}
+
+h1 {
+    font-size: 6vw;
+    padding: 10px;
+}
+
+h2 {
+  font-size: 4vw;
+}
+
+a{
+  font-size: 2vw;
+  color: white;
+  text-decoration: none;
+  padding: 15px;
+  margin: auto;
+  white-space: nowrap;
+}
+
+a:link {
+  background-color: #07BEB8;
+}
+
+a:hover {
+  background-color: #C4FFF9;
+}
+
+a:active {
+  background-color: #9CEAEF;
 }

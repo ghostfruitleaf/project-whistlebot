@@ -4,16 +4,24 @@
     <meta charset="UTF-8">
     <title>whistlebot mission control</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='login.css') }}">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600&display=swap" rel="stylesheet">
 </head>
 <body>
+<header>
+</header>
+<main>
+  <section class="login-box">
+    <div class="header"><h1><b>welcome to whistlebot's mission control!</b></h1></div>
+      <article>
+           <h2><b>if you have a discord account:</b></h2>
+          {% for k, v in nav.items() %}
+          <a href={{k}}>{{v}}</a>
+          {% endfor %}
+      </article>
 
-<section class="form animated flipInX">
-  <h2>welcome to whistlebot's mission control!</h2>
-    <h3>login with discord:</h3>
-        {% for k, v in nav.items() %}
-        <a class='submit' href={{k}}>{{v}}</a>
-        {% endfor %}
-</section>
-
+  </section>
+</main>
 </body>
+
 </html>
