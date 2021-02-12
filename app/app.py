@@ -230,6 +230,9 @@ async def main(s_id):
 @app.route("/ban/<int:s_id>/<int:u_id>/<int:r_id>")
 @requires_authorization
 async def ban(s_id, u_id, r_id=None):
+
+    if(discord.user_id == u_id): return redirect(url_for(".index"))
+
     # ban
     data = await discord.bot_request(f'/v8/guilds/{s_id}/bans/{u_id}', method='PUT')
 
@@ -253,6 +256,9 @@ async def ban(s_id, u_id, r_id=None):
 @app.route("/kick/<int:s_id>/<int:u_id>/<int:r_id>")
 @requires_authorization
 async def kick(s_id, u_id, r_id=None):
+
+    if (discord.user_id == u_id): return redirect(url_for(".index"))
+
     # kick
     data = await discord.bot_request(f'/v8/guilds/{s_id}/members/{u_id}', method='DELETE')
 
