@@ -72,9 +72,14 @@
                                 <h5>{{member['notes']}}</h5>
                                 <div class = 'actions'>
                                     <h3><span>actions</span></h3>
-                                    <a class= 'alert' href={{'/ban/'+member['ban_kick']}}>ban</a>
-                                    <a href={{'/kick/'+member['ban_kick']}}>kick</a>
-                                    <a href={{'/toggle/'+member['discord_id']|string}}> {{member['user_agrmt_toggle']}} <b>!flag</b></a>
+                                    {% if member['discord_id'] != user.id%}
+
+                                        <a class= 'alert' href={{'/ban/'+member['ban_kick']}}>ban</a>
+                                        <a href={{'/kick/'+member['ban_kick']}}>kick</a>
+                                        <a href={{'/toggle/'+member['discord_id']|string}}> {{member['user_agrmt_toggle']}} <b>!flag</b></a>
+                                    {% else %}
+                                        <p><span>none -- this is you!</span></p>
+                                    {% endif %}
                                 </div>
                             </article>
                         {% endfor %}
