@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>whistlebot mission control</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='login.css') }}">
 </head>
 <body>
-<h1>welcome to whistlebot's mission control!</h1>
-<h2>login with your discord account:</h2>
-    {% for k, v in nav.items() %}
-    <a href={{k}}>{{v}}</a>
-    {% endfor %}
+
+<section class="form animated flipInX">
+  <h2>welcome to whistlebot's mission control!</h2>
+    <h3>login with discord:</h3>
+        {% for k, v in nav.items() %}
+        <a class='submit' href={{k}}>{{v}}</a>
+        {% endfor %}
+</section>
+
 </body>
 </html>

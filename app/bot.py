@@ -221,7 +221,7 @@ async def flag(ctx):
         member_profile = bot_db.db.member_profiles.find_one({'server_id': int(ctx.message.guild_id),
                                                             'user_id': int(ctx.message.author.id)})
 
-        can_flag = member_profile['user_argmt_status']
+        can_flag = None if member_profile is None else member_profile['user_argmt_status']
 
 
         if (not can_flag) and (can_flag is not None):

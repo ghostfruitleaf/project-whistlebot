@@ -233,10 +233,10 @@ class Database:
             if not reporter_exists:
                 # new values
                 rpt_times = find_exhibit['times_reported'] + 1
-                reports = reports.append(int(report_id))
-                update_val = {'$set': {'times_reported': rpt_times, 'reports': reports}}
-                return True if self.db.exhibits.update_one({'reported_message_id': int(reported_message.id)},
-                                                           update_val).modified_count == 1 else False
+                find_exhibit['reports'].append(int(report_id))
+                update_val = {'$set': {'times_reported': rpt_times, 'reports': find_exhibit['reports']}}
+                return True, 1 if self.db.exhibits.update_one({'reported_message_id': int(reported_message.id)},
+                                                           update_val).modified_count == 1 else False, 0
 
             # flag to tell reporter not re-report a message, please -- this should help prevent spam
             else:
@@ -260,7 +260,7 @@ class Database:
         rptd_msg = self.save_reported_message(reported_message, report.id, report.author.id)  # get tuple code
 
         # no message saved successfully
-        if rptd_msg[0] and rptd_msg[1] < 1:
+        if rptd_msg[0] and (rptd_msg[1] < 1):
             return None
         # message saved
         elif rptd_msg[0]:
