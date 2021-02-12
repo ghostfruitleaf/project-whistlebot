@@ -37,10 +37,15 @@
                                 <p class="message">"{{report['reported_message']}}"</p>
                                 <h5><span class="report-field">on</span> {{report['reported_timestamp']}}</h5>
                                 <div class = 'actions'>
+
                                     <h3><span class="report-field">actions</span></h3>
+                                    {% if report['action_taken'] == 'N/A' %}
                                     <a class= 'alert' href={{'/ban/'+report['ban_kick']}}>ban</a>
                                     <a href={{'/kick/'+report['ban_kick']}}>kick</a>
                                     <a href={{'/ignore/'+report['report_id']|string}}>ignore</a>
+                                    {% else %}
+                                    <p><span class="report-field">situation handled! you picked: </span> {{report['action_taken']}}</p>
+                                    {% endif %}
                                 </div>
                             </article>
                         {% endfor %}

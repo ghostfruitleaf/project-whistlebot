@@ -3,6 +3,7 @@ body {
   padding: 0;
   margin: 0;
   text-align: center;
+  overflow-wrap: break-word;
 }
 
 header, section.server-nav {
@@ -18,7 +19,7 @@ header {
   background: #9CEAEF;
 }
 
-a.servers {
+a.servers, div > a.unban {
   background: #005856;
 }
 
@@ -38,7 +39,7 @@ h1 {
 }
 
 h2 {
-  font-size: 4vw;
+  font-size: 2.5vw;
 }
 
 a{
@@ -80,17 +81,12 @@ main > section {
   display: nowrap;
 }
 
-article.report {
-  position: relative;
-  align-content: space-between;
-  width: 100%;
-}
-
 div.items {
   display: grid;
   grid-auto-flow: row;
   align-content: space-between;
   grid-row-gap: 5%;
+  width: 100%;
 }
 
 section.member{
@@ -105,6 +101,10 @@ article.member, article.report {
   background-color: white;
   border: #b2f3f2 solid 2px;
   color: #07BEB8;
+  width: 100%;
+  align-content: space-between;
+  max-width: inherit;
+  box-sizing: border-box;
 }
 
 span.field{
@@ -120,9 +120,5 @@ span.field{
 }
 
 p.message {
-  font-size: 2.5vw;
-}
-
-a.home{
-
+  font-size: 2vw;
 }

@@ -30,7 +30,7 @@
                     <div class= 'items'>
                     {% if reports is not string %}
                         {% for report in reports%}
-                            {% if report['action_taken'] == False %}
+                            {% if report['action_taken'] == 'N/A' %}
                             <article class = 'report'>
                                 <h2>#{{report['report_id']}}</h2>
                                 <h3><span class="report-field">reported by</span> {{report['reporter_name']}} <span class="report-field">on</span> {{report['report_time']}}</h3>
@@ -72,10 +72,15 @@
                                 <h5>{{member['notes']}}</h5>
                                 <div class = 'actions'>
                                     <h3><span>actions</span></h3>
-                                    {% if member['discord_id'] != user.id%}
-
-                                        <a class= 'alert' href={{'/ban/'+member['ban_kick']}}>ban</a>
-                                        <a href={{'/kick/'+member['ban_kick']}}>kick</a>
+                                    {% if member['discord_id'] != user.id %}
+                                        {% if member['status'] != 'banned' %}
+                                        <a class= 'alert' href={{'/ban/'+member['ban_kick']+'/0'}}>ban</a>
+                                        {% else %}
+                                        <a class= 'unban' href={{'/unban/'+member['ban_kick']}}>unban</a>
+                                        {% endif %}
+                                        {% if member['status'] == 'active' %}
+                                        <a href={{'/kick/'+member['ban_kick']+'/0'}}>kick</a>
+                                        {% endif %}
                                         <a href={{'/toggle/'+member['discord_id']|string}}> {{member['user_agrmt_toggle']}} <b>!flag</b></a>
                                     {% else %}
                                         <p><span>none -- this is you!</span></p>
