@@ -223,7 +223,7 @@ async def main(s_id):
                 """
     else:
         app_db.db.admin_profiles.update_one({'admin_id': discord.user_id}, {'$set': {'main_server': new_main[0]}})
-
+        session['main_server'] = new_main
     return redirect(url_for(".index"))
 
 

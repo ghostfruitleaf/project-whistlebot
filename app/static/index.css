@@ -114,13 +114,12 @@ span.field{
   color: #005856;
 }
 
-.report > h2{
+.report > h2, p.message{
   color: #005856;
 }
 
 p.message {
   font-size: 2.5vw;
-  color: #005856;
 }
 
 a.home{

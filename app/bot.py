@@ -207,6 +207,8 @@ async def flag(ctx):
     # default message: DM error if no reply found
     msg = '**no report sent!** please reply to a server message you wish to flag!'
 
+    update_rpt_count = False
+
     # handle various reply cases
     if msg_type == 'REPLY':
 
@@ -254,7 +256,7 @@ async def flag(ctx):
                 await ctx.message.add_reaction("\N{WHITE HEAVY CHECK MARK}")
                 msg = 'thank you for your report -- it is currently under review by the admin team.'
                 msg += f"\nif you wish to see status updates of your report, please type the following:\n**!report_update {ctx.message.id}** "
-
+                update_rpt_count = not update_rpt_count
         # send msg
         await ctx.message.author.send("**whistlebot update!**\n" + msg)
 
@@ -263,9 +265,11 @@ async def flag(ctx):
             reporter_member = await bot.rest.fetch_member(guild=guild.id, user=ctx.message.author.id)
             reported_member = await bot.rest.fetch_member(guild=guild.id, user=msg_ref.author.id)
 
-            # ensure user info saved
-            reporter_check = bot_db.update_user_doc(ctx.message.author, reporter_member, guild, -1)
-            reported_check = bot_db.update_user_doc(msg_ref.author, reported_member, guild, 1)
+            # ensure user info saved with correct report update
+            code_tuple = (0, 0) if not update_rpt_count else (-1, 1)
+
+            reporter_check = bot_db.update_user_doc(ctx.message.author, reporter_member, guild, code_tuple[0])
+            reported_check = bot_db.update_user_doc(msg_ref.author, reported_member, guild, code_tuple[1])
             debug_msg = post_report_users_update(reporter_check, reported_check)
 
             if debug_msg:
