@@ -22,7 +22,7 @@ a.servers {
   background: #005856;
 }
 
-div > a.alert {
+div > a.alert, a.home {
   background: red;
 }
 
@@ -54,7 +54,7 @@ a:link {
   background-color: #07BEB8;
 }
 
-a:hover {
+div > a.alert:hover, a:hover {
   background-color: #00201d;
 }
 
@@ -96,6 +96,10 @@ section.member{
   background-color: #e8fffd;
 }
 
+section.member, section.report {
+    overflow: scroll;
+}
+
 article.member, article.report {
   background-color: white;
   border: #b2f3f2 solid 2px;
@@ -117,4 +121,8 @@ span.field{
 p.message {
   font-size: 2.5vw;
   color: #005856;
+}
+
+a.home{
+
 }

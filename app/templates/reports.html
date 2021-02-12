@@ -26,11 +26,10 @@
         </section>
         <main>
                 <section class= 'report'>
-                    <h2><b>today's reports</b></h2>
+                    <h2><b>all reports</b></h2>
                     <div class= 'items'>
                     {% if reports is not string %}
                         {% for report in reports%}
-                            {% if report['action_taken'] == False %}
                             <article class = 'report'>
                                 <h2>#{{report['report_id']}}</h2>
                                 <h3><span class="report-field">reported by</span> {{report['reporter_name']}} <span class="report-field">on</span> {{report['report_time']}}</h3>
@@ -44,46 +43,12 @@
                                     <a href={{'/ignore/'+report['report_id']|string}}>ignore</a>
                                 </div>
                             </article>
-                            {% endif %}
                         {% endfor %}
-                        {% if active == 0 %}
-                    <p>all active reports viewed! please see <b>/reports</b> for report history.</p>
-                        {% endif %}
                     {% else %}
                     <p>{{reports}}</p>
                     {% endif %}
                     </div>
                 </section>
-                <section class = 'member'>
-                    <h2><b>members</b></h2>
-                    <div class= 'items'>
-                    {% if members is not string %}
-                        {% for member in members%}
-                            <article class ='member'>
-                                <h3>{{member['username']}}</h3>
-                                <h3> <span class = 'field'>aka</span> {{member['current_nickname']}}</h3>
-                                <h4><span class = 'field'>joined:</span> {{member['joined_on']}}</h4>
-                                <h4><span class = 'field'>status:</span> {{member['status']}}</h4>
-                                <h4><span class = 'field'>reports sent:</span> {{member['reports_sent']}} ({{member['report_stats'][0]}} with action taken) </h4>
-                                <h4><span class = 'field'>reports received:</span> {{member['reports_received']}} ({{member['report_stats'][1]}} with action taken)</h4>
-                                <h5><span class = 'field'>nickname history:</span> </h5>
-                                <h5>{{member['nickname_history']}}</h5>
-                                <h5><span class = 'field'>notes:</span></h5>
-                                <h5>{{member['notes']}}</h5>
-                                <div class = 'actions'>
-                                    <h3><span>actions</span></h3>
-                                    <a class= 'alert' href={{'/ban/'+member['ban_kick']}}>ban</a>
-                                    <a href={{'/kick/'+member['ban_kick']}}>kick</a>
-                                    <a href={{'/toggle/'+member['discord_id']|string}}> {{member['user_agrmt_toggle']}} <b>!flag</b></a>
-                                </div>
-                            </article>
-                        {% endfor %}
-                    {% else %}
-                    <p>{{members}}</p>
-                    {% endif %}
-                    </div>
-                </section>
-
         </main>
 </body>
 </html>

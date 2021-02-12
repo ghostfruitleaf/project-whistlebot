@@ -79,7 +79,7 @@ def report_html(reports):
                        }
         report_objects.append(report_hash)
 
-    return "no active reports here--all is well!" if not report_objects else sorted(report_objects,
+    return "no reports here--all is well!" if not report_objects else sorted(report_objects,
                                                                                     key=lambda x: x[
                                                                                         'reported_timestamp'],
                                                                                     reverse=True)
@@ -95,8 +95,8 @@ def member_html(members):
 
         member_hash = {'discord_id': member['user_id'],
                        'username': user['discord_name'] + '#' + user['discriminator'],
-                       'current_nickname': 'none' if not member['nicknames'] else member['nicknames'][-1],
-                       'nickname_history': 'none' if not member['nicknames'] else ', '.join(member['nicknames']),
+                       'current_nickname': 'N/A' if not member['nicknames'] else member['nicknames'][-1],
+                       'nickname_history': 'N/A' if not member['nicknames'] else ', '.join(member['nicknames']),
                        'joined_on': datetime_from_utc_to_local(member['joined_at']),
                        'status': member['server_status'],
                        'reports_sent': member['reports_sent'],
@@ -146,6 +146,17 @@ async def index():
                                  nav=NAV_AUTH,
                                  active=active_r)
 
+
+@app.route("/reports")
+@requires_authorization
+async def reports():
+    user = await discord.fetch_user()
+    return await render_template('reports.html',
+                                 reports=session['main_server_reports'],
+                                 main_server=session['main_server'],
+                                 servers=session['servers'],
+                                 user=user,
+                                 nav=NAV_AUTH)
 
 @app.route("/login/")
 async def login():
@@ -277,7 +288,7 @@ async def logout():
 
 HYPERLINK = '<a href="{}">{}</a>'
 
-NAV_AUTH = {'logout': 'logout', 'invite-bot': 'invite whistlebot to a new server'}
+NAV_AUTH = {'logout': 'logout', 'invite-bot': 'invite whistlebot to a new server', 'reports':'report history'}
 NAV = {'login': 'login', 'invite-oauth': 'login and add bot to server'}
 
 if __name__ == "__main__":
