@@ -26,17 +26,18 @@
         <main>
                 <section class= 'report'>
                     <h2><b>today's reports</b></h2>
+                    <div class= 'items'>
                     {% if reports is not string %}
                         {% for report in reports%}
                             {% if report['action_taken'] == False %}
                             <article class = 'report'>
-                                <h2>report #{{report['report_id']}}</h2>
-                                <h3>reported by {{report['reporter_name']}} on {{report['report_time']}}</h3>
-                                <h4>user {{report['reported_name']}} wrote:</h4>
-                                <p>"{{report['reported_message']}}"</p>
-                                <h5><b>on {{report['reported_timestamp']}}</b></h5>
+                                <h2>#{{report['report_id']}}</h2>
+                                <h3><span class="report-field">reported by</span> {{report['reporter_name']}} <span class="report-field">on</span> {{report['report_time']}}</h3>
+                                <h4><span class="report-field">user</span> {{report['reported_name']}} <span class="report-field">wrote</span></h4>
+                                <p class="message">"{{report['reported_message']}}"</p>
+                                <h5><span class="report-field">on</span> {{report['reported_timestamp']}}</h5>
                                 <div class = 'actions'>
-                                    <h3>actions</h3>
+                                    <h3><span class="report-field">actions</span></h3>
                                     <a class= 'alert' href={{'/ban/'+report['ban_kick']}}>ban</a>
                                     <a href={{'/kick/'+report['ban_kick']}}>kick</a>
                                     <a href={{'/ignore/'+report['report_id']|string}}>ignore</a>
@@ -50,9 +51,11 @@
                     {% else %}
                     <p>{{reports}}</p>
                     {% endif %}
+                    </div>
                 </section>
                 <section class = 'member'>
                     <h2><b>members</b></h2>
+                    <div class= 'items'>
                     {% if members is not string %}
                         {% for member in members%}
                             <article class ='member'>
@@ -75,6 +78,7 @@
                     {% else %}
                     <p>{{members}}</p>
                     {% endif %}
+                    </div>
                 </section>
 
         </main>
