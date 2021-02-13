@@ -168,7 +168,7 @@ class Database:
 
             self.db.admin_profiles.insert_one(new_mod)
 
-    def add_server(self, guild):
+    def add_server(self, guild, must_add):
         """
         add_server(guild)
 
@@ -198,8 +198,13 @@ class Database:
                                    'alert_channel_id': None  # id of channel to receive reports, if specified
                                    }
                       }
+        if must_add:
+            return True if self.db.servers.insert_one(server_doc).acknowledged else False
+        else:
 
-        return True if self.db.servers.insert_one(server_doc).acknowledged else False
+            update_doc = {'$set': {'server_name': guild.name,
+                                    'member_count': guild.member_count }}
+            return True if self.db.servers.update_one({'server_id': guild.id}, update_doc) else False
 
     def save_reported_message(self, reported_message, report_id, reporter_id):
         """

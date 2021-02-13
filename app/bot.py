@@ -61,12 +61,13 @@ async def check_server_profile(event):
     get_id = event.guild.owner_id
     owner = await bot.rest.fetch_user(user=get_id)
 
-    # add new server profile to db
-    if find_server is None:
-        add_new_server = bot_db.add_server(event.guild)
+    # add or update new server profile to db
+    must_add = True if find_server is None else False
 
-        # sends warning message that server profile was not added to system.
-        if not add_new_server: await owner.send('whistlebot was unable to create a new profile for the following '
+    add_new_server = bot_db.add_server(event.guild, must_add)
+
+    # sends warning message that server profile was not added to system.
+    if not add_new_server: await owner.send('whistlebot was unable to create a new profile for the following '
                                                 f'server: {event.guild.name}. please try re-adding the bot or'
                                                 'adding an issue at https://github.com/PaulineChane/project-whistlebot.')
 
