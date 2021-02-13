@@ -7,8 +7,10 @@ with whistlebot on discord. primarily creates new entries for users, servers, an
 import settings
 import hikari
 import lightbulb
+import os
 from database import Database, post_report_users_update
 from datetime import datetime, timezone
+from app import app
 
 # start db
 bot_db = Database()
@@ -32,6 +34,10 @@ bot = lightbulb.Bot(token=settings.DISCORD_BOT_TOKEN,
 EVENT LISTENERS
 
 """
+@bot.listen(hikari.StartingEvent)
+async def run_app(event):
+    os.system('python app/app.py')
+
 
 """
 UPDATING SERVER INFO
