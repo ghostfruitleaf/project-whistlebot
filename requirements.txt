@@ -3,7 +3,7 @@ quart >= 0.14.1
 Quart-Discord >= 2.1.4
 
 # mongodb
-pymongo >= 3.11.2
+pymongo[tls,srv] >= 3.11.2
 
 # python tools
 pytest >= 6.2.2
