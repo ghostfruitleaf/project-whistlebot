@@ -24,7 +24,7 @@ may need to optimize as an ensure function?
 intents = (hikari.Intents.ALL_GUILDS | hikari.Intents.ALL_MESSAGES)
 
 bot = lightbulb.Bot(token=settings.DISCORD_BOT_TOKEN,
-                    prefix='!',
+                    prefix=settings.PREFIX,
                     insensitive_commands=True, intents=intents)
 
 """
