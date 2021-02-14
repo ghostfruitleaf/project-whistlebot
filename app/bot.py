@@ -34,10 +34,6 @@ bot = lightbulb.Bot(token=settings.DISCORD_BOT_TOKEN,
 EVENT LISTENERS
 
 """
-@bot.listen(hikari.StartingEvent)
-async def run_app(event):
-    os.system("hypercorn app/app.py:app") # for ubuntu deployment
-
 
 """
 UPDATING SERVER INFO

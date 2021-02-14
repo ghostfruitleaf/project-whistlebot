@@ -321,5 +321,5 @@ HYPERLINK = '<a href="{}">{}</a>'
 NAV_AUTH = {'logout': 'logout', 'invite-bot': 'invite whistlebot to a new server', 'reports':'report history'}
 NAV = {'login': 'login', 'invite-oauth': 'login and add bot to server'}
 
-#if __name__ == "__main__":
-#    app.run()
+if __name__ == "__main__":
+    app.run()
