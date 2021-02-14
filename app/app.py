@@ -322,4 +322,4 @@ NAV_AUTH = {'logout': 'logout', 'invite-bot': 'invite whistlebot to a new server
 NAV = {'login': 'login', 'invite-oauth': 'login and add bot to server'}
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0', debug=True, port=5000)
