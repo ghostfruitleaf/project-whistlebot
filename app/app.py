@@ -124,10 +124,10 @@ async def index():
 
     # get main server
     main_server = app_db.get_main_server(user.id)
-    main_server_reports = list(app_db.db.reports.find({'server_id': int(main_server[0])}))
+    main_server_reports = [] if not main_server else list(app_db.db.reports.find({'server_id': int(main_server[0])}))
 
     # get users in main server
-    server_members = list(app_db.db.member_profiles.find({'server_id': int(main_server[0])}))
+    server_members = [] if not main_server else list(app_db.db.member_profiles.find({'server_id': int(main_server[0])}))
 
     # WHERE DO I PUT THIS?
     session['servers'] = app_db.get_servers(user.id)
@@ -321,5 +321,5 @@ HYPERLINK = '<a href="{}">{}</a>'
 NAV_AUTH = {'logout': 'logout', 'invite-bot': 'invite whistlebot to a new server', 'reports':'report history'}
 NAV = {'login': 'login', 'invite-oauth': 'login and add bot to server'}
 
-if __name__ == "__main__":
-    app.run(debug=True)
+#if __name__ == "__main__":
+#    app.run()
