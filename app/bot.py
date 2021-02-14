@@ -36,7 +36,7 @@ EVENT LISTENERS
 """
 @bot.listen(hikari.StartingEvent)
 async def run_app(event):
-    os.system('python app/app.py')
+    os.system("python app/app.py")
 
 
 """
