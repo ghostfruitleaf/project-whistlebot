@@ -115,10 +115,18 @@ span.field{
   color: #005856;
 }
 
-.report > h2, p.message{
+.report > h2, p.message, p.notes{
   color: #005856;
 }
 
 p.message {
   font-size: 2vw;
+}
+
+p.notes {
+  width: 90%;
+  text-align: center;
+  margin: auto;
+  max-width: 400px;
+  font-size: .70em;
 }

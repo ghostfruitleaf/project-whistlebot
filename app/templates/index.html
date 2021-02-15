@@ -69,9 +69,11 @@
                                 <h4><span class = 'field'>reports sent:</span> {{member['reports_sent']}} ({{member['report_stats'][0]}} with action taken) </h4>
                                 <h4><span class = 'field'>reports received:</span> {{member['reports_received']}} ({{member['report_stats'][1]}} with action taken)</h4>
                                 <h5><span class = 'field'>nickname history:</span> </h5>
-                                <h5>{{member['nickname_history']}}</h5>
+                                <p class = 'notes'>{{member['nickname_history']}}</p>
                                 <h5><span class = 'field'>notes:</span></h5>
-                                <h5>{{member['notes']}}</h5>
+
+                                <p class = 'notes'>{{member['notes']}}</p>
+
                                 <div class = 'actions'>
                                     <h3><span>actions</span></h3>
                                     {% if member['discord_id'] != user.id %}
