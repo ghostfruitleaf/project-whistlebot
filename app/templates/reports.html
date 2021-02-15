@@ -41,8 +41,10 @@
 
                                     <h3><span class="report-field">actions</span></h3>
                                     {% if report['action_taken'] == 'N/A' %}
+                                    {% if member['discord_id'] != user.id %}
                                     <a class= 'alert' href={{'/ban/'+report['ban_kick']}}>ban</a>
                                     <a href={{'/kick/'+report['ban_kick']}}>kick</a>
+                                    {% endif %}
                                     <a href={{'/ignore/'+report['report_id']|string}}>ignore</a>
                                     {% else %}
                                     <p><span class="report-field">situation handled! you picked: </span> {{report['action_taken']}}</p>
