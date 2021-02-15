@@ -227,7 +227,7 @@ async def main(s_id):
     return redirect(url_for(".index"))
 
 
-@app.route("/ban/<int:s_id>/<int:u_id>/<int:r_id>", defaults={'r_id': 0})
+@app.route("/ban/<int:s_id>/<int:u_id>/<int:r_id>")
 @requires_authorization
 async def ban(s_id, u_id, r_id=None):
 
@@ -275,7 +275,7 @@ async def unban(s_id, u_id):
 
 
 
-@app.route("/kick/<int:s_id>/<int:u_id>/<int:r_id>", defaults={'r_id': 0})
+@app.route("/kick/<int:s_id>/<int:u_id>/<int:r_id>")
 @requires_authorization
 async def kick(s_id, u_id, r_id):
 
