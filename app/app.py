@@ -74,7 +74,7 @@ def report_html(reports):
                        'reported_user_id': exhibit['reported_user_id'],
                        'reported_message': exhibit['reported_message'],
                        'reported_timestamp': datetime_from_utc_to_local(exhibit['reported_timestamp']),
-                       'action_taken': 'N/A' if report['action']['auth_user_id'] is None else report['action']['action_taken'],
+                       'action_taken': 'N/A' if not report['action']['auth_user_id'] else report['action']['action_taken'],
                        'ban_kick': f"{report['server_id']}/{exhibit['reported_user_id']}/{report['report_id']}"
                        }
         report_objects.append(report_hash)
