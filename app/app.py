@@ -124,7 +124,7 @@ async def index():
     session['servers'] = app_db.get_servers(user.id)
 
     # get main server
-    main_server = app_db.get_main_server(user.id, session['servers'])
+    main_server = app_db.get_main_server(user.id)
     main_server_reports = [] if not main_server else list(app_db.db.reports.find({'server_id': int(main_server[0])}))
 
     # get users in main server

@@ -47,7 +47,10 @@ async def clear_server_settings(event):
 
     currently reports pertaining to server are archived, may change to a mass delete.
     """
+
+    server = bot_db.db.servers.find_one({'server_id': int(event.guild_id)})
     bot_db.db.servers.delete_one({'server_id': int(event.guild_id)})
+    bot_db.db.admin_profiles.delete_one({'admin_id': server['auth_users'][0]})
 
 
 @bot.listen(hikari.GuildAvailableEvent)

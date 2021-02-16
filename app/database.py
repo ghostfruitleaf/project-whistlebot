@@ -115,11 +115,12 @@ class Database:
 
         return user_servers
 
-    def get_main_server(self, user_id, servers):
+    def get_main_server(self, user_id):
         """
         Given a user, returns server_id of main server of user with profile in db
         """
         admin = self.db.admin_profiles.find_one({'admin_id': int(user_id)})
+        servers = self.get_servers(user_id)
 
         if servers and not admin['main_server']:
             self.db.admin_profiles.update_one({'admin_id': int(user_id)}, {'$set': {'main_server': servers[0]}})
@@ -163,15 +164,18 @@ class Database:
         Given a user, creates a new profile for a user authorized to access the interface for a
         particular server.
         """
-        if self.db.admin_profiles.find_one({'admin_id': int(user.id)}) is None:
-            servers = self.get_servers(user.id)
-            new_mod = {'admin_id': user.id,
-                       'username': user.name,
-                       'main_server': None if not servers else servers[0],
-                       'auth_servers': servers
-                       }
+        servers = self.get_servers(user.id)
+        new_mod = {'admin_id': user.id,
+                   'username': user.name,
+                   'main_server': None if not servers else servers[0],
+                   'auth_servers': servers
+                   }
+        cur_mod = self.db.admin_profiles.find_one({'admin_id': int(user.id)})
+        if cur_mod is None:
 
             self.db.admin_profiles.insert_one(new_mod)
+        elif len(servers) != len(cur_mod['auth_servers']):
+            self.db.admin_profiles.update_one({'admin_id': int(user.id)},{'$set': new_mod})
 
     def add_server(self, guild, must_add):
         """
