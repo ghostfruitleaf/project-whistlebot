@@ -115,11 +115,16 @@ class Database:
 
         return user_servers
 
-    def get_main_server(self, user_id):
+    def get_main_server(self, user_id, servers):
         """
         Given a user, returns server_id of main server of user with profile in db
         """
         admin = self.db.admin_profiles.find_one({'admin_id': int(user_id)})
+
+        if servers and not admin['main_server']:
+            self.db.admin_profiles.update_one({'admin_id': int(user_id)}, {'$set': {'main_server': servers[0]}})
+            return servers[0]
+
         return admin['main_server']
 
 

@@ -121,16 +121,16 @@ async def index():
     # get user to check
     user = await discord.fetch_user()
     app_db.ensure_admin_profile(user)
+    session['servers'] = app_db.get_servers(user.id)
 
     # get main server
-    main_server = app_db.get_main_server(user.id)
+    main_server = app_db.get_main_server(user.id, session['servers'])
     main_server_reports = [] if not main_server else list(app_db.db.reports.find({'server_id': int(main_server[0])}))
 
     # get users in main server
     server_members = [] if not main_server else list(app_db.db.member_profiles.find({'server_id': int(main_server[0])}))
 
     # WHERE DO I PUT THIS?
-    session['servers'] = app_db.get_servers(user.id)
     session['main_server'] = main_server
     session['main_server_reports'] = report_html(main_server_reports)
     session['main_server_members'] = member_html(server_members)
