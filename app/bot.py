@@ -99,8 +99,8 @@ async def check_exhibit_update(event):
         # send message to author if too many edit attempts
         if len(edited_message['reported_edits']) > 3:
             await event.message.author.send('**whistlebot update:**\n'
-                                            'it has been brought to our attention that you have attempted to edit'
-                                            f'message {event.message.id} multiple times. please note that the'
+                                            'it has been brought to our attention that you have attempted to edit\n'
+                                            f'message {event.message.id} multiple times. please note that the\n'
                                             'edits have been saved and will be viewable by server admins.')
 
 
