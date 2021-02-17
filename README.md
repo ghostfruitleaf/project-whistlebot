@@ -19,7 +19,9 @@ whistlebot will be planned to anticipate the worst, but assume the best -- that 
 
 ### installation 
 #### pre-requisites
-this project is currently set up to be run locally or on an Amazon EC2 machine.at minimum, it is assumed that you have:
+this project is currently set up to be run locally or on an Amazon EC2 machine (not recommended for security reasons).
+
+at minimum, it is assumed that you have:
 - [the most recent version of python installed on your machine](https://www.python.org/downloads/)
 - a mongoDB uri from mongoDB's cloud. [here's a good guide.](https://www.knowi.com/blog/getting-started-with-mongodb-atlas-overview-and-tutorial/)
 - a discord bot. [see the section **How to Create a Discord Bot Account** here.]()
