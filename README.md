@@ -67,11 +67,11 @@ at minimum, it is assumed that you have:
 1. open project in pycharm. run bot.py and app.py. make sure they are both configured to the project-whistlebot root folder to collect env variables. 
 
 ## can i contribute to whistlebot?
-__AS OF FEB 12, 2021 --__ whistlebot is currently a capstone project for the classroom portion of cohort 14 of [ada developers academy](https://adadevelopersacademy.org/). 
+__AS OF FEB 17, 2021 --__ whistlebot was a capstone project for the classroom portion of cohort 14 of [ada developers academy](https://adadevelopersacademy.org/). 
 
-please be noted that although a front end was created for purposes of the capstone, **it is highly likely that project-whistlebot will no longer have a dashboard/interface in future versions** in order to better streamline with how discord moderators typically run servers.
+please be noted that although a front end was created for purposes of the capstone, **it is highly likely that project-whistlebot will no longer have a dashboard/interface in future versions** in order to better streamline with how discord moderators typically run servers. there are currently plans to convert from using a database to caching and saving info in a custom channel, as well as turning whistlebot into a bot extension. also, considerable refactoring needs to be done on the code base.
 
-starting around march, i will be open to reviewing pull requests and suggested modifications for the bot, but cannot guarantee the speediest response until possibly summer 2021! thank you for understanding! 
+starting **feb 19, 2021**, i will be open to reviewing pull requests and suggested modifications for the bot, but cannot guarantee the speediest response until possibly summer 2021! thank you for understanding! 
 
 ## where can i check whistlebot's progress/intended features?
 you can view the trello board **[HERE](https://trello.com/b/pRWqDbYP/project-whistlebot)**.
