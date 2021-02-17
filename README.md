@@ -58,7 +58,7 @@ this project is currently set up to be run locally or on an Amazon EC2 machine.a
 1. `cd` into `project-whistlebot/app.`
 2. in the root folder, open two new terminals. 
 3. in one terminal, enter `$ ./ubuntu_nrun.sh` for the bot.
-4. in another terminal, enter `$ ./ubuntu_apprun.sh` for the site. 
+4. in another terminal, enter `$ ./ubuntu_apprun.sh` for the site, which should be up at http://0.0.0.0:8000/.
 5. you may close these terminals if you no longer wish to run them. 
 
 ##### if you are running this on PyCharm
