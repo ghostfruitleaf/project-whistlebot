@@ -9,7 +9,7 @@ project whistlebot is an experiment to explore a possible reporting system/web i
 - python
    - [hikari](https://github.com/hikari-py/hikari)
    - [hikari-lightbulb](https://github.com/tandemdude/hikari-lightbulb)
-- quart
+- quart (w/ built-in [hypercorn](https://pgjones.gitlab.io/hypercorn/))
    - [quart-discord](https://github.com/jnawk/Quart-Discord) (TO BE REMOVED)
 - mongodb
    - pymongo
