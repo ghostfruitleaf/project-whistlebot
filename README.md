@@ -1,6 +1,17 @@
 # project-whistlebot
 a prototype reporting interface for discord moderation 
-capstone project for [ada developers academy, cohort 14](https://adadevelopersacademy.org/)
+originally a capstone project for [ada developers academy, cohort 14](https://adadevelopersacademy.org/)
+
+## UPDATE (MAY 5, 2021)
+based on the results of this capstone project/prototype, project-whistlebot will be undergoing a major re-design and re-architecture starting around **august 2021** at earliest. the intent is to make project-whistlebot more compatible with common discord server configurations, instead of competing with existing services and bots. now that this repo is no longer constrained to certain capstone project requirements, 
+
+### what will these changes impact? 
+1. **removal of the quart app.** out of security concerns and limiting the number of interfaces available to access whistlebot features and functionality, in the future, **project-whistlebot will no longer have a quart app frontend.** the quart app initially fulfilled a front end requirement for the ada capstone, but in my opinion, there are serious security issues with being able to run administrative functions on a 3rd party interface, especially if the intent of project-whistlebot is to automate reporting functions for servers with very large userbases. **while project-whistlebot will no longer formally support or provide a web app in the future, you are free to create your own at your own risk.** also, permissions management will be a lot easier this way.
+2. **more object oriented design!** "working code" was the key prerogative for the prototype, but it would be nice to be able to scale the app and significantly clean up/refactor the code. 
+3. **adding tests** this should hopefully reduce manual testing. 
+4. **utilizing the cache/discord channels to store logs instead of an external database** again, this is for security concerns, as well as making project-whistlebot data more accessible to its end users. 
+
+please stay tuned for more updates!
 
 ## what is project whistlebot? 
 project whistlebot is an experiment to explore a possible reporting system/web interface (whistlebot) that moderators and admins can use to ensure the safety and comfort of members of their community. as such, while whistlebot will be designed a built with the best possible experience in mind, it will also be built with the intent of trying things that might not work as well in practice, trying new things and seeing how they work, and learning from all that to help improve the way we can moderate our communities. 
