@@ -12,7 +12,7 @@ based on the results of this capstone project/prototype, project-whistlebot will
 4. **utilizing the cache/discord channels to store logs instead of an external database!** again, this is for security concerns, as well as making project-whistlebot data more accessible to its end users. 
 
 ###  i have an idea/input! 
-awesome! for now, please add your thoughts in the thread under [this issue](https://github.com/PaulineChane/project-whistlebot/issues/1)!
+awesome! for now, please add your thoughts in the thread under [this discussion board](https://github.com/PaulineChane/project-whistlebot/discussions/2)!
 
 **the following sections may contain out of date information as a result.**
 
