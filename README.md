@@ -1,5 +1,5 @@
 # project-whistlebot
-a prototype reporting interface for discord moderation 
+a prototype reporting interface for discord moderation-- 
 originally a capstone project for [ada developers academy, cohort 14](https://adadevelopersacademy.org/)
 
 ## UPDATE (MAY 5, 2021)
