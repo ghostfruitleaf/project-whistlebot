@@ -2,6 +2,8 @@
 a prototype reporting interface for discord moderation-- 
 originally a capstone project for [ada developers academy, cohort 14](https://adadevelopersacademy.org/)
 
+![image of whistlebot at work](project_whistlebot_discord_end.png)
+
 ## UPDATE (MAY 5, 2021)
 based on the results of this capstone project/prototype, project-whistlebot will be undergoing a major re-design and re-architecture starting around **august 2021** at earliest. the intent is to make project-whistlebot more compatible with common discord server configurations, instead of competing with existing services and bots. now that this repo is no longer constrained to certain capstone project requirements, this repo will be re-written to better reflect the needs of the discord community. 
 
